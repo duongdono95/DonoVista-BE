@@ -1,0 +1,29 @@
+{
+  "name": "donovista-be",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel server.ts -d dist",
+    "start": "npm run build && nodemon node dist/server.ts",
+    "dev": "nodemon src/server.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.23.9",
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.6",
+    "eslint": "^8.56.0",
+    "nodemon": "^3.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
