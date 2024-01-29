@@ -1,0 +1,53 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.boardController = void 0;
+const generalTypes_1 = require("../zod/generalTypes");
+const http_status_codes_1 = require("http-status-codes");
+const boardService_1 = require("../services/boardService");
+const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const validatedBoard = yield generalTypes_1.createNewBoardRequestType.safeParseAsync(req.body);
+        console.log(req.body);
+        if (!validatedBoard.success) {
+            return res.status(200).json({
+                code: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                message: 'Request Validation Failed',
+                errors: validatedBoard.error.toString(),
+            });
+        }
+        const createdBoard = yield boardService_1.boardService.createNew(validatedBoard.data);
+        console.log(createdBoard);
+        res.status(200).json({
+            code: 200,
+            message: 'Created New Board Successfully',
+            data: createdBoard,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const boards = yield boardService_1.boardService.getAllBoards();
+        if (!boards)
+            res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json({ message: 'Board List not found' });
+        return res.status(http_status_codes_1.StatusCodes.OK).json(boards);
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.boardController = {
+    createNew,
+    getAllBoards,
+};

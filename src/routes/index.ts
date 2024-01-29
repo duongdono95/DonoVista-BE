@@ -1,8 +1,8 @@
 import express from 'express';
-import { boardRoute } from './boardRouter';
+import { boardRoute } from './boardRoute';
 
 const Router = express.Router();
 
-Router.use('/board', boardRoute);
+Router.use('/boards', boardRoute);
 
 export const app_router = Router;
