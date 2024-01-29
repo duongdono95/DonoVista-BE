@@ -10,7 +10,7 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: StatusCodes.BAD_REQUEST,
-                message: 'Request Validation Failed',
+                message: 'Request Creating New Board Validation Failed',
                 errors: validatedBoard.error.toString(),
             });
         }
@@ -29,8 +29,12 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
 const getAllBoards = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const boards = await boardService.getAllBoards();
-        if (!boards) res.status(StatusCodes.NOT_FOUND).json({ message: 'Board List not found' });
-        return res.status(StatusCodes.OK).json(boards);
+        if (!boards) res.status(200).json({ message: 'No Board was found' });
+        return res.status(200).json({
+            code: 200,
+            message: 'Get All Boards Successfully',
+            data: boards,
+        });
     } catch (error) {
         next(error);
     }

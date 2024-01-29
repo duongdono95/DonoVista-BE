@@ -20,7 +20,7 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: http_status_codes_1.StatusCodes.BAD_REQUEST,
-                message: 'Request Validation Failed',
+                message: 'Request Creating New Board Validation Failed',
                 errors: validatedBoard.error.toString(),
             });
         }
@@ -40,8 +40,12 @@ const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
     try {
         const boards = yield boardService_1.boardService.getAllBoards();
         if (!boards)
-            res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json({ message: 'Board List not found' });
-        return res.status(http_status_codes_1.StatusCodes.OK).json(boards);
+            res.status(200).json({ message: 'No Board was found' });
+        return res.status(200).json({
+            code: 200,
+            message: 'Get All Boards Successfully',
+            data: boards,
+        });
     }
     catch (error) {
         next(error);
