@@ -9,15 +9,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.boardModel = void 0;
+exports.boardModel = exports.BOARD_COLLECTION_NAME = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
 const mongodb_1 = require("../config/mongodb");
 const mongodb_2 = require("mongodb");
-const BOARD_COLLECTION_NAME = 'boards';
-const INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
+exports.BOARD_COLLECTION_NAME = 'boards';
+const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, mongodb_1.GET_DB)().collection(BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
+        const result = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
         return result;
     }
     catch (error) {
@@ -33,7 +33,7 @@ const createNew = (board) => __awaiter(void 0, void 0, void 0, function* () {
                 error: validatedBoard.error.errors,
             }));
         }
-        const createdBoard = yield (0, mongodb_1.GET_DB)().collection(BOARD_COLLECTION_NAME).insertOne(validatedBoard.data);
+        const createdBoard = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).insertOne(validatedBoard.data);
         return createdBoard;
     }
     catch (error) {
@@ -42,7 +42,7 @@ const createNew = (board) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, mongodb_1.GET_DB)().collection(BOARD_COLLECTION_NAME).findOne(id);
+        const result = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).findOne(id);
         return result;
     }
     catch (error) {
@@ -57,7 +57,7 @@ const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, fun
             }
         });
         const result = yield (0, mongodb_1.GET_DB)()
-            .collection(BOARD_COLLECTION_NAME)
+            .collection(exports.BOARD_COLLECTION_NAME)
             .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updatedData }, { returnDocument: 'after' });
         return result;
     }
@@ -68,7 +68,7 @@ const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, fun
 const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield (0, mongodb_1.GET_DB)()
-            .collection(BOARD_COLLECTION_NAME)
+            .collection(exports.BOARD_COLLECTION_NAME)
             .deleteOne({ _id: new mongodb_2.ObjectId(id) });
         return result;
     }

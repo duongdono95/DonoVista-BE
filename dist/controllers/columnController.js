@@ -10,9 +10,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.columnController = void 0;
+const generalTypes_1 = require("../zod/generalTypes");
+const columnService_1 = require("../services/columnService");
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log(req);
+        const validateRequest = yield generalTypes_1.NewColumnRequestZod.safeParseAsync(req.body);
+        if (!validateRequest.success) {
+            throw new Error('Validate Create New Column Request Failed');
+        }
+        const createdColumn = yield columnService_1.columnService.createNew(validateRequest.data);
+        console.log(createdColumn);
+        res.status(200).json({
+            code: 200,
+            message: 'Created New Column Successfully',
+            data: createdColumn
+        });
     }
     catch (error) {
         next(error);

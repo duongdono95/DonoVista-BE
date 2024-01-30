@@ -3,9 +3,9 @@ import { BoardSchemaType, BoardSchemaZod, NewBoardRequestType, NewBoardRequestZo
 import { GET_DB } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 
-const BOARD_COLLECTION_NAME = 'boards';
+export const BOARD_COLLECTION_NAME = 'boards';
 
-const INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
+const INVALID_UPDATED_FIELDS = ['_id', 'ownerId' ,'createdAt'];
 
 const getAllBoards = async () => {
     try {
