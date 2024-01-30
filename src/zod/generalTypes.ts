@@ -14,8 +14,11 @@ export enum ComponentTypeEnum {
     Card = 'card',
 }
 // ----------------------------------Board --------------------------------------
-export const NewColumnRequestZod = z.object({})
+export const NewColumnRequestZod = z.object({
+
+})
 export type NewColumnRequestType = z.infer<typeof NewColumnRequestZod>;
+
 export const ColumnSchemaZod = NewColumnRequestZod.extend({})
 export type ColumnSchemaType = z.infer<typeof ColumnSchemaZod>;
 
