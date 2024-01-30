@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BoardSchemaZod = exports.NewBoardRequestZod = exports.ColumnSchemaZod = exports.ComponentTypeEnum = exports.VisibilityTypeEnum = void 0;
+exports.BoardSchemaZod = exports.NewBoardRequestZod = exports.ColumnSchemaZod = exports.NewColumnRequestZod = exports.ComponentTypeEnum = exports.VisibilityTypeEnum = void 0;
 const zod_1 = require("zod");
 var VisibilityTypeEnum;
 (function (VisibilityTypeEnum) {
@@ -14,7 +14,10 @@ var ComponentTypeEnum;
     ComponentTypeEnum["Column"] = "column";
     ComponentTypeEnum["Card"] = "card";
 })(ComponentTypeEnum || (exports.ComponentTypeEnum = ComponentTypeEnum = {}));
-exports.ColumnSchemaZod = zod_1.z.object({});
+// ----------------------------------Board --------------------------------------
+exports.NewColumnRequestZod = zod_1.z.object({});
+exports.ColumnSchemaZod = exports.NewColumnRequestZod.extend({});
+// ----------------------------------Board --------------------------------------
 exports.NewBoardRequestZod = zod_1.z.object({
     title: zod_1.z.string().min(3).max(50).trim(),
     description: zod_1.z.string().min(3).max(255).trim().optional(),

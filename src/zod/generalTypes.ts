@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 
+
 export enum VisibilityTypeEnum {
     Private = 'private',
     Public = 'public',
@@ -12,8 +13,13 @@ export enum ComponentTypeEnum {
     Column = 'column',
     Card = 'card',
 }
-export const ColumnSchemaZod = z.object({});
+// ----------------------------------Board --------------------------------------
+export const NewColumnRequestZod = z.object({})
+export type NewColumnRequestType = z.infer<typeof NewColumnRequestZod>;
+export const ColumnSchemaZod = NewColumnRequestZod.extend({})
+export type ColumnSchemaType = z.infer<typeof ColumnSchemaZod>;
 
+// ----------------------------------Board --------------------------------------
 export const NewBoardRequestZod = z.object({
     title: z.string().min(3).max(50).trim(),
     description: z.string().min(3).max(255).trim().optional(),
@@ -33,3 +39,5 @@ export const BoardSchemaZod = NewBoardRequestZod.extend({
     columns: z.array(ColumnSchemaZod).default([]),
 });
 export type BoardSchemaType = z.infer<typeof BoardSchemaZod>;
+
+
