@@ -10,16 +10,6 @@ export const errorHandlingMiddleware = (err: any, req: Request, res: Response, n
         message: err.message || StatusCodes[err.statusCode],
         stack: err.stack,
     };
-
     if (env.BUILD_MODE !== 'dev') delete responseError.stack;
-
-    res.status(responseError.statusCode).json(responseError);
-};
-export const handleNewError = (error: unknown) => {
-    if (error instanceof Error) {
-        throw new Error(error.message);
-    } else {
-        // If it's not an Error instance, convert it to string
-        throw new Error(String(error));
-    }
+    res.status(200).json(responseError);
 };

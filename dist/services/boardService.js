@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.boardService = exports.updateBoardById = void 0;
+exports.boardService = exports.deleteBoardById = exports.updateBoardById = void 0;
 const formatter_1 = require("../utils/formatter");
 const boardModel_1 = require("../models/boardModel");
 const mongodb_1 = require("mongodb");
@@ -36,15 +36,30 @@ const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, functi
 });
 const updateBoardById = (boardId, validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        return yield boardModel_1.boardModel.updateOneById(new mongodb_1.ObjectId(boardId), validatedRequest);
+        const result = yield boardModel_1.boardModel.updateOneById(new mongodb_1.ObjectId(boardId), validatedRequest);
+        console.log(result);
+        return result;
     }
     catch (error) {
         throw error;
     }
 });
 exports.updateBoardById = updateBoardById;
+const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield boardModel_1.boardModel.deleteOneById(boardId);
+        if (result.deletedCount === 0)
+            throw new Error('Delete Required Board Failed');
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
+exports.deleteBoardById = deleteBoardById;
 exports.boardService = {
     getAllBoards,
     createNew,
-    updateBoardById: exports.updateBoardById
+    updateBoardById: exports.updateBoardById,
+    deleteBoardById: exports.deleteBoardById,
 };

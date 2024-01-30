@@ -56,16 +56,30 @@ const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, fun
                 delete updatedData[key];
             }
         });
-        const result = yield (0, mongodb_1.GET_DB)().collection(BOARD_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updatedData }, { returnDocument: 'after' });
+        const result = yield (0, mongodb_1.GET_DB)()
+            .collection(BOARD_COLLECTION_NAME)
+            .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updatedData }, { returnDocument: 'after' });
         return result;
     }
     catch (error) {
         throw new Error('Update Board Failed');
     }
 });
+const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, mongodb_1.GET_DB)()
+            .collection(BOARD_COLLECTION_NAME)
+            .deleteOne({ _id: new mongodb_2.ObjectId(id) });
+        return result;
+    }
+    catch (error) {
+        throw new Error('Delete Board Failed');
+    }
+});
 exports.boardModel = {
     createNew,
     findOneById,
     getAllBoards,
-    updateOneById
+    updateOneById,
+    deleteOneById,
 };

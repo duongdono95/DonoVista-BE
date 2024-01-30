@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NewBoardRequestType, NewBoardRequestZod } from '../zod/generalTypes';
 import { slugify } from '../utils/formatter';
 import { boardModel } from '../models/boardModel';
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
 
 const getAllBoards = async () => {
     try {
@@ -24,16 +24,28 @@ const createNew = async (validatedRequest: NewBoardRequestType) => {
     }
 };
 
-export const updateBoardById = async (boardId: string, validatedRequest : NewBoardRequestType) => {
+export const updateBoardById = async (boardId: string, validatedRequest: NewBoardRequestType) => {
     try {
-        return  await boardModel.updateOneById(new ObjectId(boardId), validatedRequest);
+        const result = await boardModel.updateOneById(new ObjectId(boardId), validatedRequest);
+        console.log(result);
+        return result;
     } catch (error) {
         throw error;
     }
-}
+};
+export const deleteBoardById = async (boardId: string) => {
+    try {
+        const result = await boardModel.deleteOneById(boardId);
+        if (result.deletedCount === 0) throw new Error('Delete Required Board Failed');
+        return result;
+    } catch (error) {
+        throw error;
+    }
+};
 
 export const boardService = {
     getAllBoards,
     createNew,
-    updateBoardById
+    updateBoardById,
+    deleteBoardById,
 };

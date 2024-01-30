@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.boardController = void 0;
+exports.boardController = exports.deleteBoardById = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
 const http_status_codes_1 = require("http-status-codes");
 const boardService_1 = require("../services/boardService");
@@ -53,6 +53,8 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 const updateBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const boardId = req.params.id;
+        if (!boardId)
+            throw new Error('Board Id is required');
         const requestedBoard = Object.assign(Object.assign({}, req.body), { slug: (0, formatter_1.slugify)(req.body.title) });
         const validatedBoard = yield generalTypes_1.NewBoardRequestZod.safeParseAsync(requestedBoard);
         if (!validatedBoard.success) {
@@ -75,8 +77,27 @@ const updateBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         next(error);
     }
 });
+const deleteBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const boardId = req.params.id;
+        if (!boardId)
+            throw new Error('Board Id is required');
+        const response = yield boardService_1.boardService.deleteBoardById(boardId);
+        if (!response)
+            throw new Error('Board Delete Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Delete Board Successfully',
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.deleteBoardById = deleteBoardById;
 exports.boardController = {
     getAllBoards,
     createNew,
-    updateBoardById
+    updateBoardById,
+    deleteBoardById: exports.deleteBoardById,
 };

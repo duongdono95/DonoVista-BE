@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { NewBoardRequestZod } from '../zod/generalTypes';
 import { StatusCodes } from 'http-status-codes';
 import { boardService } from '../services/boardService';
-import { slugify } from "../utils/formatter";
+import { slugify } from '../utils/formatter';
 
 const getAllBoards = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -42,6 +42,7 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
 const updateBoardById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const boardId = req.params.id;
+        if (!boardId) throw new Error('Board Id is required');
         const requestedBoard = { ...req.body, slug: slugify(req.body.title) };
         const validatedBoard = await NewBoardRequestZod.safeParseAsync(requestedBoard);
         if (!validatedBoard.success) {
@@ -51,23 +52,36 @@ const updateBoardById = async (req: Request, res: Response, next: NextFunction) 
                 errors: validatedBoard.error.toString(),
             });
         }
-        const updatedBoard = await boardService.updateBoardById(boardId,validatedBoard.data);
-        if(!updatedBoard) throw new Error('Update Board Failed')
+        const updatedBoard = await boardService.updateBoardById(boardId, validatedBoard.data);
+        if (!updatedBoard) throw new Error('Update Board Failed');
         res.status(200).json({
             code: 200,
             message: 'Updated Board Successfully',
             data: updatedBoard,
         });
     } catch (error) {
-
-        next(error)
+        next(error);
     }
-}
+};
 
-
+export const deleteBoardById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const boardId = req.params.id;
+        if (!boardId) throw new Error('Board Id is required');
+        const response = await boardService.deleteBoardById(boardId);
+        if (!response) throw new Error('Board Delete Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Delete Board Successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 export const boardController = {
     getAllBoards,
     createNew,
-    updateBoardById
+    updateBoardById,
+    deleteBoardById,
 };
