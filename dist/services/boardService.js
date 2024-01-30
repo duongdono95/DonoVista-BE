@@ -9,9 +9,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.boardService = void 0;
+exports.boardService = exports.updateBoardById = void 0;
 const formatter_1 = require("../utils/formatter");
 const boardModel_1 = require("../models/boardModel");
+const mongodb_1 = require("mongodb");
+const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const boards = yield boardModel_1.boardModel.getAllBoards();
+        return boards;
+    }
+    catch (error) {
+        throw error;
+    }
+});
 const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const newBoard = Object.assign(Object.assign({}, validatedRequest), { slug: (0, formatter_1.slugify)(validatedRequest.title) });
@@ -24,16 +34,17 @@ const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, functi
         throw error;
     }
 });
-const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
+const updateBoardById = (boardId, validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const boards = yield boardModel_1.boardModel.getAllBoards();
-        return boards;
+        return yield boardModel_1.boardModel.updateOneById(new mongodb_1.ObjectId(boardId), validatedRequest);
     }
     catch (error) {
         throw error;
     }
 });
+exports.updateBoardById = updateBoardById;
 exports.boardService = {
-    createNew,
     getAllBoards,
+    createNew,
+    updateBoardById: exports.updateBoardById
 };

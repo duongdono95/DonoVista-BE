@@ -1,9 +1,19 @@
 import { z } from 'zod';
-import { createNewBoardRequestType } from '../zod/generalTypes';
+import { NewBoardRequestType, NewBoardRequestZod } from '../zod/generalTypes';
 import { slugify } from '../utils/formatter';
 import { boardModel } from '../models/boardModel';
+import { ObjectId } from "mongodb";
 
-const createNew = async (validatedRequest: z.infer<typeof createNewBoardRequestType>) => {
+const getAllBoards = async () => {
+    try {
+        const boards = await boardModel.getAllBoards();
+        return boards;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const createNew = async (validatedRequest: NewBoardRequestType) => {
     try {
         const newBoard = { ...validatedRequest, slug: slugify(validatedRequest.title) };
         const createdBoard = await boardModel.createNew(newBoard);
@@ -13,15 +23,17 @@ const createNew = async (validatedRequest: z.infer<typeof createNewBoardRequestT
         throw error;
     }
 };
-const getAllBoards = async () => {
+
+export const updateBoardById = async (boardId: string, validatedRequest : NewBoardRequestType) => {
     try {
-        const boards = await boardModel.getAllBoards();
-        return boards;
+        return  await boardModel.updateOneById(new ObjectId(boardId), validatedRequest);
     } catch (error) {
         throw error;
     }
-};
+}
+
 export const boardService = {
-    createNew,
     getAllBoards,
+    createNew,
+    updateBoardById
 };

@@ -12,11 +12,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.boardModel = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
 const mongodb_1 = require("../config/mongodb");
-const errorHandlingMiddleware_1 = require("../middlewares/errorHandlingMiddleware");
+const mongodb_2 = require("mongodb");
 const BOARD_COLLECTION_NAME = 'boards';
 const INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
+const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, mongodb_1.GET_DB)().collection(BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
+        return result;
+    }
+    catch (error) {
+        throw new Error('Get All Boards Failed');
+    }
+});
 const createNew = (board) => __awaiter(void 0, void 0, void 0, function* () {
-    const validatedBoard = generalTypes_1.boardSchemaType.safeParse(board);
+    const validatedBoard = generalTypes_1.BoardSchemaZod.safeParse(board);
     try {
         if (!validatedBoard.success) {
             throw new Error(JSON.stringify({
@@ -28,7 +37,7 @@ const createNew = (board) => __awaiter(void 0, void 0, void 0, function* () {
         return createdBoard;
     }
     catch (error) {
-        (0, errorHandlingMiddleware_1.handleNewError)(error);
+        throw new Error('Create New Board Failed');
     }
 });
 const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -37,20 +46,26 @@ const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         return result;
     }
     catch (error) {
-        (0, errorHandlingMiddleware_1.handleNewError)(error);
+        throw new Error('Find required Board By Id Failed');
     }
 });
-const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
+const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, mongodb_1.GET_DB)().collection(BOARD_COLLECTION_NAME).find().toArray();
+        Object.keys(updatedData).forEach((key) => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete updatedData[key];
+            }
+        });
+        const result = yield (0, mongodb_1.GET_DB)().collection(BOARD_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updatedData }, { returnDocument: 'after' });
         return result;
     }
     catch (error) {
-        (0, errorHandlingMiddleware_1.handleNewError)(error);
+        throw new Error('Update Board Failed');
     }
 });
 exports.boardModel = {
     createNew,
     findOneById,
     getAllBoards,
+    updateOneById
 };

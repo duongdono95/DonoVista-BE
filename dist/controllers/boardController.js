@@ -13,29 +13,7 @@ exports.boardController = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
 const http_status_codes_1 = require("http-status-codes");
 const boardService_1 = require("../services/boardService");
-const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const validatedBoard = yield generalTypes_1.createNewBoardRequestType.safeParseAsync(req.body);
-        console.log(req.body);
-        if (!validatedBoard.success) {
-            return res.status(200).json({
-                code: http_status_codes_1.StatusCodes.BAD_REQUEST,
-                message: 'Request Creating New Board Validation Failed',
-                errors: validatedBoard.error.toString(),
-            });
-        }
-        const createdBoard = yield boardService_1.boardService.createNew(validatedBoard.data);
-        console.log(createdBoard);
-        res.status(200).json({
-            code: 200,
-            message: 'Created New Board Successfully',
-            data: createdBoard,
-        });
-    }
-    catch (error) {
-        next(error);
-    }
-});
+const formatter_1 = require("../utils/formatter");
 const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const boards = yield boardService_1.boardService.getAllBoards();
@@ -51,7 +29,54 @@ const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         next(error);
     }
 });
+const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const validatedBoard = yield generalTypes_1.NewBoardRequestZod.safeParseAsync(req.body);
+        if (!validatedBoard.success) {
+            return res.status(200).json({
+                code: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                message: 'Request Creating New Board Validation Failed',
+                errors: validatedBoard.error.toString(),
+            });
+        }
+        const createdBoard = yield boardService_1.boardService.createNew(validatedBoard.data);
+        res.status(200).json({
+            code: 200,
+            message: 'Created New Board Successfully',
+            data: createdBoard,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const updateBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const boardId = req.params.id;
+        const requestedBoard = Object.assign(Object.assign({}, req.body), { slug: (0, formatter_1.slugify)(req.body.title) });
+        const validatedBoard = yield generalTypes_1.NewBoardRequestZod.safeParseAsync(requestedBoard);
+        if (!validatedBoard.success) {
+            return res.status(200).json({
+                code: http_status_codes_1.StatusCodes.BAD_REQUEST,
+                message: 'Request Creating New Board Validation Failed',
+                errors: validatedBoard.error.toString(),
+            });
+        }
+        const updatedBoard = yield boardService_1.boardService.updateBoardById(boardId, validatedBoard.data);
+        if (!updatedBoard)
+            throw new Error('Update Board Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Updated Board Successfully',
+            data: updatedBoard,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 exports.boardController = {
-    createNew,
     getAllBoards,
+    createNew,
+    updateBoardById
 };

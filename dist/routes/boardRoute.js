@@ -8,4 +8,5 @@ const express_1 = __importDefault(require("express"));
 const boardController_1 = require("../controllers/boardController");
 const Router = express_1.default.Router();
 Router.route('/').post(boardController_1.boardController.createNew).get(boardController_1.boardController.getAllBoards);
+Router.route('/:id').put(boardController_1.boardController.updateBoardById);
 exports.boardRoute = Router;
