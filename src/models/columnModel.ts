@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { ColumnSchemaZod, NewColumnRequestType } from "../zod/generalTypes";
-import { GET_DB } from "../config/mongodb";
+import { GET_DB, START_SESSION } from "../config/mongodb";
 import { ObjectId } from "mongodb";
 import { BOARD_COLLECTION_NAME } from "./boardModel";
 
@@ -34,7 +34,34 @@ const createNew = async (createColumnRequest: NewColumnRequestType ) => {
     }
 };
 
+const deleteColumnById = async (columnId: ObjectId, boardId: ObjectId) => {
+    if(!columnId) throw new Error('Delete Column Error - Column Id is required')
+    const db = GET_DB();
+    const session = START_SESSION();
+    try {
+        let operationResult = { success: false, message: '' }
+        await session.startTransaction();
+        (await session).withTransaction(async () => {
+            const deleteColumnResult = await db.collection(COLUMN_COLLECTION_NAME).deleteOne({_id: columnId}, {session});
+            if (deleteColumnResult.deletedCount === 0) throw new Error('Delete Column Error - Column Not Found')
+            await db.collection(BOARD_COLLECTION_NAME).updateOne(
+                {_id: boardId},
+                {$pull: { columnOrderIds: columnId}},
+                {session}
+            )
+            return operationResult = { success: true, message: 'Column deleted successfully' };
+        })
+        await session.commitTransaction();
+    } catch (error) {
+        await session.abortTransaction();
+        throw new Error('Delete Column Failed');
+    } finally {
+        await session.endSession()
+    }
+}
+
 export const columnModel = {
     createNew,
-    COLUMN_COLLECTION_NAME
+    COLUMN_COLLECTION_NAME,
+    deleteColumnById
 };

@@ -4,13 +4,12 @@ import { columnService } from "../services/columnService"
 
 const createNew = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log(req)
     const validateRequest = await NewColumnRequestZod.safeParseAsync(req.body)
     if(!validateRequest.success){
       throw new Error('Validate Create New Column Request Failed')
     }
     const createdColumn = await columnService.createNew(validateRequest.data)
-    console.log(createdColumn)
+    console.log('createdColumn controller', createdColumn)
     res.status(200).json({
       code: 200,
       message: 'Created New Column Successfully',
@@ -21,8 +20,20 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
   }
 }
 
-
+const deleteColumnById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const deletionResult = await columnService.deleteColumnById(req.body.columnId, req.body.boardId)
+    res.status(200).json({
+      code: 200,
+      message: 'Deleted Column Successfully',
+      data: deletionResult
+    })
+  } catch (error) {
+    next(error)
+  }
+}
 
 export const columnController = {
-  createNew
+  createNew,
+  deleteColumnById
 }

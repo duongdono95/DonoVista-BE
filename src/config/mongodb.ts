@@ -27,3 +27,6 @@ export const GET_DB = () => {
 export const CLOSE_DB = async () => {
     await mongoClientInstance.close();
 };
+export const START_SESSION =  () => {
+    return mongoClientInstance.startSession()
+};

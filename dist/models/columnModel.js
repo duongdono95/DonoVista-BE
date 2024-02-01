@@ -42,7 +42,33 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
         throw new Error('Create New Board Failed');
     }
 });
+const deleteColumnById = (columnId, boardId) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!columnId)
+        throw new Error('Delete Column Error - Column Id is required');
+    const db = (0, mongodb_1.GET_DB)();
+    const session = (0, mongodb_1.START_SESSION)();
+    try {
+        let operationResult = { success: false, message: '' };
+        yield session.startTransaction();
+        (yield session).withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            const deleteColumnResult = yield db.collection(COLUMN_COLLECTION_NAME).deleteOne({ _id: columnId }, { session });
+            if (deleteColumnResult.deletedCount === 0)
+                throw new Error('Delete Column Error - Column Not Found');
+            yield db.collection(boardModel_1.BOARD_COLLECTION_NAME).updateOne({ _id: boardId }, { $pull: { columnOrderIds: columnId } }, { session });
+            return operationResult = { success: true, message: 'Column deleted successfully' };
+        }));
+        yield session.commitTransaction();
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        throw new Error('Delete Column Failed');
+    }
+    finally {
+        yield session.endSession();
+    }
+});
 exports.columnModel = {
     createNew,
-    COLUMN_COLLECTION_NAME
+    COLUMN_COLLECTION_NAME,
+    deleteColumnById
 };

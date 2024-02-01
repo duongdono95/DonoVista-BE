@@ -14,13 +14,12 @@ const generalTypes_1 = require("../zod/generalTypes");
 const columnService_1 = require("../services/columnService");
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log(req);
         const validateRequest = yield generalTypes_1.NewColumnRequestZod.safeParseAsync(req.body);
         if (!validateRequest.success) {
             throw new Error('Validate Create New Column Request Failed');
         }
         const createdColumn = yield columnService_1.columnService.createNew(validateRequest.data);
-        console.log(createdColumn);
+        console.log('createdColumn controller', createdColumn);
         res.status(200).json({
             code: 200,
             message: 'Created New Column Successfully',
@@ -31,6 +30,20 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         next(error);
     }
 });
+const deleteColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const deletionResult = yield columnService_1.columnService.deleteColumnById(req.body.columnId, req.body.boardId);
+        res.status(200).json({
+            code: 200,
+            message: 'Deleted Column Successfully',
+            data: deletionResult
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 exports.columnController = {
-    createNew
+    createNew,
+    deleteColumnById
 };

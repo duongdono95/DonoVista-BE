@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CLOSE_DB = exports.GET_DB = exports.CONNECT_DB = void 0;
+exports.START_SESSION = exports.CLOSE_DB = exports.GET_DB = exports.CONNECT_DB = void 0;
 // donovista
 // XH4qn2r6iqHkhKGv
 const mongodb_1 = require("mongodb");
@@ -38,3 +38,7 @@ const CLOSE_DB = () => __awaiter(void 0, void 0, void 0, function* () {
     yield mongoClientInstance.close();
 });
 exports.CLOSE_DB = CLOSE_DB;
+const START_SESSION = () => {
+    return mongoClientInstance.startSession();
+};
+exports.START_SESSION = START_SESSION;
