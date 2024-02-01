@@ -13,6 +13,8 @@ exports.boardModel = exports.BOARD_COLLECTION_NAME = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
 const mongodb_1 = require("../config/mongodb");
 const mongodb_2 = require("mongodb");
+const columnModel_1 = require("./columnModel");
+const cardModel_1 = require("./cardModel");
 exports.BOARD_COLLECTION_NAME = 'boards';
 const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -76,10 +78,48 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Delete Board Failed');
     }
 });
+const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, mongodb_1.GET_DB)()
+            .collection(exports.BOARD_COLLECTION_NAME)
+            .aggregate([
+            {
+                $match: {
+                    _id: new mongodb_2.ObjectId(id),
+                    _destroy: false,
+                },
+            },
+            {
+                $lookup: {
+                    from: columnModel_1.columnModel.COLUMN_COLLECTION_NAME,
+                    let: { boardId: { $toString: '$_id' } },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }
+                    ],
+                    as: 'columns'
+                },
+            },
+            {
+                $lookup: {
+                    from: cardModel_1.cardModel.CARD_COLLECTION_NAME,
+                    localField: '_id',
+                    foreignField: 'boardId',
+                    as: 'cards'
+                }
+            }
+        ]).toArray();
+        console.log(result);
+        return result;
+    }
+    catch (error) {
+        throw new Error('Delete Board Failed');
+    }
+});
 exports.boardModel = {
     createNew,
     findOneById,
     getAllBoards,
     updateOneById,
     deleteOneById,
+    getBoardById
 };

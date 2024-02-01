@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { BoardSchemaType, BoardSchemaZod, NewBoardRequestType, NewBoardRequestZod } from '../zod/generalTypes';
 import { GET_DB } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
+import { columnModel } from "./columnModel";
+import { cardModel } from "./cardModel";
 
 export const BOARD_COLLECTION_NAME = 'boards';
 
@@ -70,10 +72,49 @@ const deleteOneById = async (id: string) => {
         throw new Error('Delete Board Failed');
     }
 };
+
+const getBoardById = async (id: string) => {
+    try {
+        const result = await GET_DB()
+            .collection(BOARD_COLLECTION_NAME)
+            .aggregate([
+
+                    {
+                        $match: {
+                            _id: new ObjectId(id),
+                            _destroy: false,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: columnModel.COLUMN_COLLECTION_NAME,
+                            let: { boardId: { $toString: '$_id' } },
+                            pipeline: [
+                                { $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }
+                            ],
+                            as: 'columns'
+                        },
+                    },
+                   {
+                    $lookup: {
+                        from: cardModel.CARD_COLLECTION_NAME,
+                        localField: '_id',
+                        foreignField: 'boardId',
+                        as: 'cards'
+                    }
+                   }
+            ]).toArray();
+            console.log(result)
+        return result;
+    } catch (error) {
+        throw new Error('Delete Board Failed');
+    }
+};
 export const boardModel = {
     createNew,
     findOneById,
     getAllBoards,
     updateOneById,
     deleteOneById,
+    getBoardById
 };

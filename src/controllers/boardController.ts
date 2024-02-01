@@ -64,7 +64,7 @@ const updateBoardById = async (req: Request, res: Response, next: NextFunction) 
     }
 };
 
-export const deleteBoardById = async (req: Request, res: Response, next: NextFunction) => {
+ const deleteBoardById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const boardId = req.params.id;
         if (!boardId) throw new Error('Board Id is required');
@@ -78,10 +78,26 @@ export const deleteBoardById = async (req: Request, res: Response, next: NextFun
         next(error);
     }
 };
+const getBoardById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const boardId = req.params.id;
+        if (!boardId) throw new Error('Board Id is required');
+        const result = await boardService.getBoardById(boardId);
+        if (!result) throw new Error('Fetch Board Detail failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Fetch Board Detail Successfully',
+            data: result
+        });
+    } catch (error) {
+        next(error)
+    }
+}
 
 export const boardController = {
     getAllBoards,
     createNew,
     updateBoardById,
     deleteBoardById,
+    getBoardById
 };

@@ -36,4 +36,5 @@ const createNew = async (createColumnRequest: NewColumnRequestType ) => {
 
 export const columnModel = {
     createNew,
+    COLUMN_COLLECTION_NAME
 };

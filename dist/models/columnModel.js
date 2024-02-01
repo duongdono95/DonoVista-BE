@@ -44,4 +44,5 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
 });
 exports.columnModel = {
     createNew,
+    COLUMN_COLLECTION_NAME
 };

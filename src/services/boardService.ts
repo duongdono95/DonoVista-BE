@@ -24,7 +24,7 @@ const createNew = async (validatedRequest: NewBoardRequestType) => {
     }
 };
 
-export const updateBoardById = async (boardId: string, validatedRequest: NewBoardRequestType) => {
+ const updateBoardById = async (boardId: string, validatedRequest: NewBoardRequestType) => {
     try {
         const result = await boardModel.updateOneById(new ObjectId(boardId), validatedRequest);
         console.log(result);
@@ -33,10 +33,19 @@ export const updateBoardById = async (boardId: string, validatedRequest: NewBoar
         throw error;
     }
 };
-export const deleteBoardById = async (boardId: string) => {
+ const deleteBoardById = async (boardId: string) => {
     try {
         const result = await boardModel.deleteOneById(boardId);
         if (result.deletedCount === 0) throw new Error('Delete Required Board Failed');
+        return result;
+    } catch (error) {
+        throw error;
+    }
+};
+
+ const getBoardById = async (boardId: string) => {
+    try {
+        const result = await boardModel.getBoardById(boardId);
         return result;
     } catch (error) {
         throw error;
@@ -48,4 +57,5 @@ export const boardService = {
     createNew,
     updateBoardById,
     deleteBoardById,
+    getBoardById
 };

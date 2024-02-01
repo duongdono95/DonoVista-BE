@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.boardService = exports.deleteBoardById = exports.updateBoardById = void 0;
+exports.boardService = void 0;
 const formatter_1 = require("../utils/formatter");
 const boardModel_1 = require("../models/boardModel");
 const mongodb_1 = require("mongodb");
@@ -44,7 +44,6 @@ const updateBoardById = (boardId, validatedRequest) => __awaiter(void 0, void 0,
         throw error;
     }
 });
-exports.updateBoardById = updateBoardById;
 const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield boardModel_1.boardModel.deleteOneById(boardId);
@@ -56,10 +55,19 @@ const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function*
         throw error;
     }
 });
-exports.deleteBoardById = deleteBoardById;
+const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield boardModel_1.boardModel.getBoardById(boardId);
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
 exports.boardService = {
     getAllBoards,
     createNew,
-    updateBoardById: exports.updateBoardById,
-    deleteBoardById: exports.deleteBoardById,
+    updateBoardById,
+    deleteBoardById,
+    getBoardById
 };
