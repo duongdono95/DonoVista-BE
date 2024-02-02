@@ -20,7 +20,17 @@ const deleteColumnById = async (columnId: string, boardId: string) => {
   }
 }
 
+const updateColumnById = (id: string, validatedRequest: NewColumnRequestType) => {
+  try {
+    const result = columnModel.updateColumnById(new ObjectId(id),validatedRequest)
+    return result;
+  } catch (error) {
+    throw error
+  }
+}
+
 export const columnService = {
   createNew,
-  deleteColumnById
+  deleteColumnById,
+  updateColumnById
 };

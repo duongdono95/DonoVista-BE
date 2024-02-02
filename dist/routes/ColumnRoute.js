@@ -8,6 +8,5 @@ const express_1 = __importDefault(require("express"));
 const columnController_1 = require("../controllers/columnController");
 const Router = express_1.default.Router();
 Router.route('/').post(columnController_1.columnController.createNew).delete(columnController_1.columnController.deleteColumnById);
-// .get(boardController.getAllBoards);
-// Router.route('/:id').put(boardController.updateBoardById).delete(boardController.deleteBoardById);
+Router.route('/:id').put(columnController_1.columnController.updateColumnById);
 exports.columnRoute = Router;

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.columnController = void 0;
+exports.columnController = exports.updateColumnById = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
 const columnService_1 = require("../services/columnService");
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -43,7 +43,28 @@ const deleteColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         next(error);
     }
 });
+const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const validateRequest = yield generalTypes_1.NewColumnRequestZod.safeParseAsync(req.body);
+        console.log(validateRequest);
+        if (!validateRequest.success)
+            throw new Error('Validate Update Column Request Failed');
+        const result = yield columnService_1.columnService.updateColumnById(req.params.id, validateRequest.data);
+        if (!result)
+            throw new Error('Update Column Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Updated Column Successfully',
+            data: result
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+exports.updateColumnById = updateColumnById;
 exports.columnController = {
     createNew,
-    deleteColumnById
+    deleteColumnById,
+    updateColumnById: exports.updateColumnById
 };

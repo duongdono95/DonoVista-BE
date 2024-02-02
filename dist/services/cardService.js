@@ -9,39 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.columnService = void 0;
-const mongodb_1 = require("mongodb");
-const columnModel_1 = require("../models/columnModel");
+exports.cardService = void 0;
+const cardModel_1 = require("../models/cardModel");
 const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield columnModel_1.columnModel.createNew(validatedRequest);
-        console.log('result service', result);
+        const result = yield cardModel_1.cardModel.createNew(validatedRequest);
         return result;
     }
     catch (error) {
         throw error;
     }
 });
-const deleteColumnById = (columnId, boardId) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = yield columnModel_1.columnModel.deleteColumnById(new mongodb_1.ObjectId(columnId), new mongodb_1.ObjectId(boardId));
-        return result;
-    }
-    catch (error) {
-        throw error;
-    }
-});
-const updateColumnById = (id, validatedRequest) => {
-    try {
-        const result = columnModel_1.columnModel.updateColumnById(new mongodb_1.ObjectId(id), validatedRequest);
-        return result;
-    }
-    catch (error) {
-        throw error;
-    }
-};
-exports.columnService = {
+exports.cardService = {
     createNew,
-    deleteColumnById,
-    updateColumnById
 };

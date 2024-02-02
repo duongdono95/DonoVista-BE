@@ -33,7 +33,25 @@ const deleteColumnById = async (req: Request, res: Response, next: NextFunction)
   }
 }
 
+export const updateColumnById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const validateRequest = await NewColumnRequestZod.safeParseAsync(req.body);
+    console.log(validateRequest)
+    if(!validateRequest.success) throw new Error('Validate Update Column Request Failed')
+    const result = await columnService.updateColumnById(req.params.id,validateRequest.data)
+    if(!result) throw new Error('Update Column Failed')
+    res.status(200).json({
+      code: 200,
+      message: 'Updated Column Successfully',
+      data: result
+    })
+  } catch(error) {
+    next(error)
+  }
+}
+
 export const columnController = {
   createNew,
-  deleteColumnById
+  deleteColumnById,
+  updateColumnById
 }

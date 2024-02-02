@@ -21,7 +21,7 @@ export const NewCardRequestZod = z.object({
     columnId: z.string(),
     title: z.string().min(3).max(50).trim(),
     description: z.string().min(3).max(255).trim().optional(),
-    componentType: z.literal(ComponentTypeEnum.Card),
+    componentType: z.literal(ComponentTypeEnum.Card).default(ComponentTypeEnum.Card),
 })
 export type NewCardRequestType = z.infer<typeof NewCardRequestZod>;
 
@@ -37,7 +37,7 @@ export const NewColumnRequestZod = z.object({
     ownerId: z.union([z.string(), z.literal('guestId')]).default('guestId'),
     boardId: z.string(),
     title: z.string().min(3).max(50).trim(),
-    componentType: z.literal(ComponentTypeEnum.Column),
+    componentType: z.literal(ComponentTypeEnum.Column).default(ComponentTypeEnum.Column),
 })
 export type NewColumnRequestType = z.infer<typeof NewColumnRequestZod>;
 
@@ -56,7 +56,7 @@ export const NewBoardRequestZod = z.object({
     title: z.string().min(3).max(50).trim(),
     description: z.string().min(3).max(255).trim().optional(),
     visibilityType: z.nativeEnum(VisibilityTypeEnum).default(VisibilityTypeEnum.Private).optional(),
-    componentType: z.literal(ComponentTypeEnum.Board),
+    componentType: z.literal(ComponentTypeEnum.Board).default(ComponentTypeEnum.Board),
 });
 export type NewBoardRequestType = z.infer<typeof NewBoardRequestZod>;
 

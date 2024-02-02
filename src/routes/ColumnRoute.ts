@@ -5,7 +5,6 @@ import { columnController } from "../controllers/columnController";
 const Router = express.Router();
 
 Router.route('/').post(columnController.createNew).delete(columnController.deleteColumnById)
-// .get(boardController.getAllBoards);
-// Router.route('/:id').put(boardController.updateBoardById).delete(boardController.deleteBoardById);
+Router.route('/:id').put(columnController.updateColumnById);
 
 export const columnRoute = Router;
