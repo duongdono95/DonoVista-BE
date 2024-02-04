@@ -22,7 +22,25 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         res.status(200).json({
             code: 200,
             message: 'Created New Card Successfully',
-            data: createdCard
+            data: createdCard,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const deleteCard = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const cardId = req.body.cardId;
+        const columnId = req.body.columnId;
+        const boardId = req.body.boardId;
+        if (!cardId || !boardId || !columnId)
+            throw new Error('Delete Card Request missing required fields');
+        const result = yield cardService_1.cardService.deleteCard(cardId, columnId, boardId);
+        res.status(200).json({
+            code: 200,
+            message: 'Delete New Card Successfully',
+            data: result,
         });
     }
     catch (error) {
@@ -31,4 +49,5 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 });
 exports.cardController = {
     createNew,
+    deleteCard,
 };

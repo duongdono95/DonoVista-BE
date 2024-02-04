@@ -37,7 +37,6 @@ const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, functi
 const updateBoardById = (boardId, validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield boardModel_1.boardModel.updateOneById(new mongodb_1.ObjectId(boardId), validatedRequest);
-        console.log(result);
         return result;
     }
     catch (error) {
@@ -58,7 +57,7 @@ const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function*
 const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield boardModel_1.boardModel.getBoardById(boardId);
-        return result;
+        return result[0];
     }
     catch (error) {
         throw error;
@@ -69,5 +68,5 @@ exports.boardService = {
     createNew,
     updateBoardById,
     deleteBoardById,
-    getBoardById
+    getBoardById,
 };

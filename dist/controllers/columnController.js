@@ -19,11 +19,10 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             throw new Error('Validate Create New Column Request Failed');
         }
         const createdColumn = yield columnService_1.columnService.createNew(validateRequest.data);
-        console.log('createdColumn controller', createdColumn);
         res.status(200).json({
             code: 200,
             message: 'Created New Column Successfully',
-            data: createdColumn
+            data: createdColumn,
         });
     }
     catch (error) {
@@ -36,7 +35,7 @@ const deleteColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         res.status(200).json({
             code: 200,
             message: 'Deleted Column Successfully',
-            data: deletionResult
+            data: deletionResult,
         });
     }
     catch (error) {
@@ -46,7 +45,6 @@ const deleteColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
 const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const validateRequest = yield generalTypes_1.NewColumnRequestZod.safeParseAsync(req.body);
-        console.log(validateRequest);
         if (!validateRequest.success)
             throw new Error('Validate Update Column Request Failed');
         const result = yield columnService_1.columnService.updateColumnById(req.params.id, validateRequest.data);
@@ -55,7 +53,7 @@ const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
         res.status(200).json({
             code: 200,
             message: 'Updated Column Successfully',
-            data: result
+            data: result,
         });
     }
     catch (error) {
@@ -66,5 +64,5 @@ exports.updateColumnById = updateColumnById;
 exports.columnController = {
     createNew,
     deleteColumnById,
-    updateColumnById: exports.updateColumnById
+    updateColumnById: exports.updateColumnById,
 };

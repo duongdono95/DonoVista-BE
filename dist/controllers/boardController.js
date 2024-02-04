@@ -32,6 +32,7 @@ const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const validatedBoard = yield generalTypes_1.NewBoardRequestZod.safeParseAsync(req.body);
+        console.log(req.body);
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: http_status_codes_1.StatusCodes.BAD_REQUEST,
@@ -105,7 +106,7 @@ const getBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         res.status(200).json({
             code: 200,
             message: 'Fetch Board Detail Successfully',
-            data: result
+            data: result,
         });
     }
     catch (error) {
@@ -117,5 +118,5 @@ exports.boardController = {
     createNew,
     updateBoardById,
     deleteBoardById,
-    getBoardById
+    getBoardById,
 };

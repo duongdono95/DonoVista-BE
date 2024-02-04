@@ -24,16 +24,15 @@ const createNew = async (validatedRequest: NewBoardRequestType) => {
     }
 };
 
- const updateBoardById = async (boardId: string, validatedRequest: NewBoardRequestType) => {
+const updateBoardById = async (boardId: string, validatedRequest: NewBoardRequestType) => {
     try {
         const result = await boardModel.updateOneById(new ObjectId(boardId), validatedRequest);
-        console.log(result);
         return result;
     } catch (error) {
         throw error;
     }
 };
- const deleteBoardById = async (boardId: string) => {
+const deleteBoardById = async (boardId: string) => {
     try {
         const result = await boardModel.deleteOneById(boardId);
         if (result.deletedCount === 0) throw new Error('Delete Required Board Failed');
@@ -43,10 +42,10 @@ const createNew = async (validatedRequest: NewBoardRequestType) => {
     }
 };
 
- const getBoardById = async (boardId: string) => {
+const getBoardById = async (boardId: string) => {
     try {
         const result = await boardModel.getBoardById(boardId);
-        return result;
+        return result[0];
     } catch (error) {
         throw error;
     }
@@ -57,5 +56,5 @@ export const boardService = {
     createNew,
     updateBoardById,
     deleteBoardById,
-    getBoardById
+    getBoardById,
 };

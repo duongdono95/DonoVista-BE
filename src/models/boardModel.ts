@@ -1,17 +1,18 @@
 import { z } from 'zod';
 import { BoardSchemaType, BoardSchemaZod, NewBoardRequestType, NewBoardRequestZod } from '../zod/generalTypes';
-import { GET_DB } from '../config/mongodb';
+import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
-import { columnModel } from "./columnModel";
-import { cardModel } from "./cardModel";
+import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
+import { CARD_COLLECTION_NAME, cardModel } from './cardModel';
 
 export const BOARD_COLLECTION_NAME = 'boards';
 
-const INVALID_UPDATED_FIELDS = ['_id', 'ownerId' ,'createdAt'];
+const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 
 const getAllBoards = async () => {
     try {
         const result = await GET_DB().collection(BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
+        console.log(result);
         return result;
     } catch (error) {
         throw new Error('Get All Boards Failed');
@@ -63,10 +64,41 @@ const updateOneById = async (id: ObjectId, updatedData: NewBoardRequestType) => 
 };
 
 const deleteOneById = async (id: string) => {
+    const db = GET_DB();
     try {
-        const result = await GET_DB()
-            .collection(BOARD_COLLECTION_NAME)
-            .deleteOne({ _id: new ObjectId(id) });
+        const board = await db.collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(id) });
+        if (!board) throw new Error('Board not found');
+
+        if (board.columnOrderIds && board.columnOrderIds.length > 0) {
+            const columns = await db
+                .collection(COLUMN_COLLECTION_NAME)
+                .find({
+                    _id: {
+                        $in: board.columnOrderIds.map((id: string) => new ObjectId(id)),
+                    },
+                })
+                .toArray();
+
+            const allCardIds = columns.reduce((acc, column) => {
+                if (column.cardOrderIds && column.cardOrderIds.length > 0) {
+                    const cardIds = column.cardOrderIds.map((id: string) => new ObjectId(id));
+                    return acc.concat(cardIds);
+                }
+                return acc;
+            }, []);
+            if (allCardIds.length > 0) {
+                await db.collection(CARD_COLLECTION_NAME).deleteMany({
+                    _id: { $in: allCardIds },
+                });
+            }
+            await db.collection(COLUMN_COLLECTION_NAME).deleteMany({
+                _id: {
+                    $in: board.columnOrderIds.map((id: string) => new ObjectId(id)),
+                },
+            });
+        }
+
+        const result = await db.collection(BOARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(id) });
         return result;
     } catch (error) {
         throw new Error('Delete Board Failed');
@@ -78,33 +110,30 @@ const getBoardById = async (id: string) => {
         const result = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .aggregate([
-
-                    {
-                        $match: {
-                            _id: new ObjectId(id),
-                            _destroy: false,
-                        },
+                {
+                    $match: {
+                        _id: new ObjectId(id),
+                        _destroy: false,
                     },
-                    {
-                        $lookup: {
-                            from: columnModel.COLUMN_COLLECTION_NAME,
-                            let: { boardId: { $toString: '$_id' } },
-                            pipeline: [
-                                { $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }
-                            ],
-                            as: 'columns'
-                        },
+                },
+                {
+                    $lookup: {
+                        from: columnModel.COLUMN_COLLECTION_NAME,
+                        let: { boardId: { $toString: '$_id' } },
+                        pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
+                        as: 'columns',
                     },
-                   {
+                },
+                {
                     $lookup: {
                         from: cardModel.CARD_COLLECTION_NAME,
                         localField: '_id',
                         foreignField: 'boardId',
-                        as: 'cards'
-                    }
-                   }
-            ]).toArray();
-            console.log(result)
+                        as: 'cards',
+                    },
+                },
+            ])
+            .toArray();
         return result;
     } catch (error) {
         throw new Error('Delete Board Failed');
@@ -116,5 +145,5 @@ export const boardModel = {
     getAllBoards,
     updateOneById,
     deleteOneById,
-    getBoardById
+    getBoardById,
 };

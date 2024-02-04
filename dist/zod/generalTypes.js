@@ -20,10 +20,10 @@ exports.NewCardRequestZod = zod_1.z.object({
     boardId: zod_1.z.string(),
     columnId: zod_1.z.string(),
     title: zod_1.z.string().min(3).max(50).trim(),
-    description: zod_1.z.string().min(3).max(255).trim().optional(),
     componentType: zod_1.z.literal(ComponentTypeEnum.Card).default(ComponentTypeEnum.Card),
 });
 exports.CardSchemaZod = exports.NewCardRequestZod.extend({
+    description: zod_1.z.string().min(3).max(255).trim().optional(),
     createdAt: zod_1.z.date().default(() => new Date()),
     updatedAt: zod_1.z.date().nullable().default(null),
     _destroy: zod_1.z.boolean().default(false),
@@ -47,7 +47,7 @@ exports.NewBoardRequestZod = zod_1.z.object({
     ownerId: zod_1.z.union([zod_1.z.string(), zod_1.z.literal('guestId')]).default('guestId'),
     title: zod_1.z.string().min(3).max(50).trim(),
     description: zod_1.z.string().min(3).max(255).trim().optional(),
-    visibilityType: zod_1.z.nativeEnum(VisibilityTypeEnum).default(VisibilityTypeEnum.Private).optional(),
+    visibilityType: zod_1.z.nativeEnum(VisibilityTypeEnum).default(VisibilityTypeEnum.Private),
     componentType: zod_1.z.literal(ComponentTypeEnum.Board).default(ComponentTypeEnum.Board),
 });
 exports.BoardSchemaZod = exports.NewBoardRequestZod.extend({

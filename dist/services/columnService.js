@@ -15,7 +15,6 @@ const columnModel_1 = require("../models/columnModel");
 const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield columnModel_1.columnModel.createNew(validatedRequest);
-        console.log('result service', result);
         return result;
     }
     catch (error) {
@@ -43,5 +42,5 @@ const updateColumnById = (id, validatedRequest) => {
 exports.columnService = {
     createNew,
     deleteColumnById,
-    updateColumnById
+    updateColumnById,
 };

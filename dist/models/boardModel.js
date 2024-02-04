@@ -20,6 +20,7 @@ const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
+        console.log(result);
         return result;
     }
     catch (error) {
@@ -68,10 +69,39 @@ const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const db = (0, mongodb_1.GET_DB)();
     try {
-        const result = yield (0, mongodb_1.GET_DB)()
-            .collection(exports.BOARD_COLLECTION_NAME)
-            .deleteOne({ _id: new mongodb_2.ObjectId(id) });
+        const board = yield db.collection(exports.BOARD_COLLECTION_NAME).findOne({ _id: new mongodb_2.ObjectId(id) });
+        if (!board)
+            throw new Error('Board not found');
+        if (board.columnOrderIds && board.columnOrderIds.length > 0) {
+            const columns = yield db
+                .collection(columnModel_1.COLUMN_COLLECTION_NAME)
+                .find({
+                _id: {
+                    $in: board.columnOrderIds.map((id) => new mongodb_2.ObjectId(id)),
+                },
+            })
+                .toArray();
+            const allCardIds = columns.reduce((acc, column) => {
+                if (column.cardOrderIds && column.cardOrderIds.length > 0) {
+                    const cardIds = column.cardOrderIds.map((id) => new mongodb_2.ObjectId(id));
+                    return acc.concat(cardIds);
+                }
+                return acc;
+            }, []);
+            if (allCardIds.length > 0) {
+                yield db.collection(cardModel_1.CARD_COLLECTION_NAME).deleteMany({
+                    _id: { $in: allCardIds },
+                });
+            }
+            yield db.collection(columnModel_1.COLUMN_COLLECTION_NAME).deleteMany({
+                _id: {
+                    $in: board.columnOrderIds.map((id) => new mongodb_2.ObjectId(id)),
+                },
+            });
+        }
+        const result = yield db.collection(exports.BOARD_COLLECTION_NAME).deleteOne({ _id: new mongodb_2.ObjectId(id) });
         return result;
     }
     catch (error) {
@@ -93,10 +123,8 @@ const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                 $lookup: {
                     from: columnModel_1.columnModel.COLUMN_COLLECTION_NAME,
                     let: { boardId: { $toString: '$_id' } },
-                    pipeline: [
-                        { $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }
-                    ],
-                    as: 'columns'
+                    pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
+                    as: 'columns',
                 },
             },
             {
@@ -104,11 +132,11 @@ const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                     from: cardModel_1.cardModel.CARD_COLLECTION_NAME,
                     localField: '_id',
                     foreignField: 'boardId',
-                    as: 'cards'
-                }
-            }
-        ]).toArray();
-        console.log(result);
+                    as: 'cards',
+                },
+            },
+        ])
+            .toArray();
         return result;
     }
     catch (error) {
@@ -121,5 +149,5 @@ exports.boardModel = {
     getAllBoards,
     updateOneById,
     deleteOneById,
-    getBoardById
+    getBoardById,
 };

@@ -14,6 +14,7 @@ const generalTypes_1 = require("../zod/generalTypes");
 const mongodb_1 = require("../config/mongodb");
 const mongodb_2 = require("mongodb");
 const boardModel_1 = require("./boardModel");
+const cardModel_1 = require("./cardModel");
 exports.COLUMN_COLLECTION_NAME = 'columns';
 const INVALID_UPDATED_FIELDS = ['_id', 'boardId', 'ownerId', 'createdAt'];
 const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, function* () {
@@ -23,7 +24,9 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
     }
     try {
         // validate the board
-        const board = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOne({
+        const board = yield (0, mongodb_1.GET_DB)()
+            .collection(boardModel_1.BOARD_COLLECTION_NAME)
+            .findOne({
             _id: new mongodb_2.ObjectId(createColumnRequest.boardId),
         });
         if (!board)
@@ -33,10 +36,14 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
         if (!createdColumnResult)
             throw new Error('Creating New Column Error - Insert To Database Failed');
         // update the board
-        yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).updateOne({ _id: new mongodb_2.ObjectId(validatedRequest.data.boardId) }, { $push: {
+        yield (0, mongodb_1.GET_DB)()
+            .collection(boardModel_1.BOARD_COLLECTION_NAME)
+            .updateOne({ _id: new mongodb_2.ObjectId(validatedRequest.data.boardId) }, {
+            $push: {
                 columns: createdColumnResult.insertedId,
-                columnOrderIds: createdColumnResult.insertedId
-            } });
+                columnOrderIds: createdColumnResult.insertedId,
+            },
+        });
         return createdColumnResult;
     }
     catch (error) {
@@ -48,14 +55,28 @@ const deleteColumnById = (columnId, boardId) => __awaiter(void 0, void 0, void 0
         throw new Error('Delete Column Error - Column Id is required');
     const db = (0, mongodb_1.GET_DB)();
     const session = yield (0, mongodb_1.START_SESSION)();
+    let operationResult = { success: false, message: '' };
     try {
-        let operationResult = { success: false, message: '' };
         session.startTransaction();
-        const deleteColumnResult = yield db.collection(exports.COLUMN_COLLECTION_NAME).deleteOne({ _id: columnId }, { session });
+        const column = yield db.collection(exports.COLUMN_COLLECTION_NAME).findOne({ _id: columnId }, { session });
+        if (!column)
+            throw new Error('Column not found');
+        if (column.cardOrderIds && column.cardOrderIds.length > 0) {
+            yield db.collection(cardModel_1.CARD_COLLECTION_NAME).deleteMany({
+                _id: {
+                    $in: column.cardOrderIds.map((id) => new mongodb_2.ObjectId(id)),
+                },
+            }, { session });
+        }
+        const deleteColumnResult = yield db
+            .collection(exports.COLUMN_COLLECTION_NAME)
+            .deleteOne({ _id: columnId }, { session });
         if (deleteColumnResult.deletedCount === 0) {
             throw new Error('Delete Column Error - Column Not Found');
         }
-        yield db.collection(boardModel_1.BOARD_COLLECTION_NAME).updateOne({ _id: boardId }, { $pull: { columnOrderIds: columnId, columns: columnId } }, { session });
+        yield db
+            .collection(boardModel_1.BOARD_COLLECTION_NAME)
+            .updateOne({ _id: boardId }, { $pull: { columnOrderIds: columnId, columns: columnId } }, { session });
         operationResult = { success: true, message: 'Column deleted successfully' };
         yield session.commitTransaction();
         return operationResult;
@@ -80,12 +101,11 @@ const updateColumnById = (id, updateColumnRequest) => __awaiter(void 0, void 0, 
             .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updateColumnRequest }, { returnDocument: 'after' });
         return result;
     }
-    catch (error) {
-    }
+    catch (error) { }
 });
 exports.columnModel = {
     createNew,
     COLUMN_COLLECTION_NAME: exports.COLUMN_COLLECTION_NAME,
     deleteColumnById,
-    updateColumnById
+    updateColumnById,
 };

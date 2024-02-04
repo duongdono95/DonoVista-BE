@@ -1,36 +1,35 @@
-import { ObjectId } from "mongodb";
-import { columnModel } from "../models/columnModel";
-import { NewColumnRequestType } from "../zod/generalTypes";
+import { ObjectId } from 'mongodb';
+import { columnModel } from '../models/columnModel';
+import { NewColumnRequestType } from '../zod/generalTypes';
 
 const createNew = async (validatedRequest: NewColumnRequestType) => {
-  try {
-      const result = await columnModel.createNew(validatedRequest);
-      console.log('result service', result)
-      return result;
-  } catch (error) {
-      throw error;
-  }
+    try {
+        const result = await columnModel.createNew(validatedRequest);
+        return result;
+    } catch (error) {
+        throw error;
+    }
 };
 const deleteColumnById = async (columnId: string, boardId: string) => {
-  try {
-    const result = await columnModel.deleteColumnById(new ObjectId(columnId), new ObjectId(boardId));
-    return result
-  } catch (error) {
-    throw error
-  }
-}
+    try {
+        const result = await columnModel.deleteColumnById(new ObjectId(columnId), new ObjectId(boardId));
+        return result;
+    } catch (error) {
+        throw error;
+    }
+};
 
 const updateColumnById = (id: string, validatedRequest: NewColumnRequestType) => {
-  try {
-    const result = columnModel.updateColumnById(new ObjectId(id),validatedRequest)
-    return result;
-  } catch (error) {
-    throw error
-  }
-}
+    try {
+        const result = columnModel.updateColumnById(new ObjectId(id), validatedRequest);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+};
 
 export const columnService = {
-  createNew,
-  deleteColumnById,
-  updateColumnById
+    createNew,
+    deleteColumnById,
+    updateColumnById,
 };

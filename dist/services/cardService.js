@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cardService = void 0;
+const mongodb_1 = require("mongodb");
 const cardModel_1 = require("../models/cardModel");
 const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -20,6 +21,16 @@ const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, functi
         throw error;
     }
 });
+const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield cardModel_1.cardModel.deleteCard(new mongodb_1.ObjectId(cardId), new mongodb_1.ObjectId(columnId), new mongodb_1.ObjectId(boardId));
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
 exports.cardService = {
     createNew,
+    deleteCard,
 };
