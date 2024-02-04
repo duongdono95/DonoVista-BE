@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { columnModel } from '../models/columnModel';
-import { NewColumnRequestType } from '../zod/generalTypes';
+import { ColumnSchemaType, NewColumnRequestType } from '../zod/generalTypes';
 
 const createNew = async (validatedRequest: NewColumnRequestType) => {
     try {
@@ -19,7 +19,7 @@ const deleteColumnById = async (columnId: string, boardId: string) => {
     }
 };
 
-const updateColumnById = (id: string, validatedRequest: NewColumnRequestType) => {
+const updateColumnById = (id: string, validatedRequest: ColumnSchemaType) => {
     try {
         const result = columnModel.updateColumnById(new ObjectId(id), validatedRequest);
         return result;

@@ -8,7 +8,7 @@ const errorHandlingMiddleware = (err, req, res, next) => {
         err.statusCode = http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR;
     // res.status(StatusCodes.UNPROCESSABLE_ENTITY).json(validatedBoard.error.issues);
     const responseError = {
-        statusCode: err.statusCode,
+        code: err.statusCode,
         message: err.message || http_status_codes_1.StatusCodes[err.statusCode],
         stack: err.stack,
     };

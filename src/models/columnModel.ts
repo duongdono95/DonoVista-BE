@@ -1,5 +1,5 @@
-import { StatusCodes } from 'http-status-codes';
-import { ColumnSchemaZod, NewColumnRequestType } from '../zod/generalTypes';
+
+import { ColumnSchemaType, ColumnSchemaZod, NewColumnRequestType } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { BOARD_COLLECTION_NAME } from './boardModel';
@@ -86,11 +86,11 @@ const deleteColumnById = async (columnId: ObjectId, boardId: ObjectId) => {
         await session.endSession();
     }
 };
-const updateColumnById = async (id: ObjectId, updateColumnRequest: NewColumnRequestType) => {
+const updateColumnById = async (id: ObjectId, updateColumnRequest: ColumnSchemaType) => {
     try {
         Object.keys(updateColumnRequest).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete updateColumnRequest[key as keyof NewColumnRequestType];
+                delete updateColumnRequest[key as keyof ColumnSchemaType];
             }
         });
         const result = await GET_DB()

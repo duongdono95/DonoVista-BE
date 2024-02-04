@@ -23,11 +23,11 @@ export type NewCardRequestType = z.infer<typeof NewCardRequestZod>;
 
 export const CardSchemaZod = NewCardRequestZod.extend({
     description: z.string().min(3).max(255).trim().optional(),
-    createdAt: z.date().default(() => new Date()),
-    updatedAt: z.date().nullable().default(null),
+    createdAt: z.string().default(() => new Date().toString()),
+    updatedAt: z.string().nullable().default(null),
     _destroy: z.boolean().default(false),
 });
-export type CardSchemaType = z.infer<typeof ColumnSchemaZod>;
+export type CardSchemaType = z.infer<typeof CardSchemaZod>;
 
 // ----------------------------------Column --------------------------------------
 export const NewColumnRequestZod = z.object({
@@ -41,8 +41,8 @@ export type NewColumnRequestType = z.infer<typeof NewColumnRequestZod>;
 export const ColumnSchemaZod = NewColumnRequestZod.extend({
     cards: z.array(CardSchemaZod).default([]),
     cardOrderIds: z.array(z.string()).default([]),
-    createdAt: z.date().default(() => new Date()),
-    updatedAt: z.date().nullable().default(null),
+    createdAt:   z.string().default(() => new Date().toString()),
+    updatedAt: z.string().nullable().default(null),
     _destroy: z.boolean().default(false),
 });
 export type ColumnSchemaType = z.infer<typeof ColumnSchemaZod>;
@@ -62,8 +62,8 @@ export const BoardSchemaZod = NewBoardRequestZod.extend({
     memberIds: z.array(z.string()).default([]),
     columns: z.array(ColumnSchemaZod).default([]),
     columnOrderIds: z.array(z.string()).default([]),
-    createdAt: z.date().default(() => new Date()),
-    updatedAt: z.date().nullable().default(null),
+    createdAt: z.string().default(() => new Date().toString()),
+    updatedAt: z.string().nullable().default(null),
     _destroy: z.boolean().default(false),
 });
 export type BoardSchemaType = z.infer<typeof BoardSchemaZod>;

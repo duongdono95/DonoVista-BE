@@ -24,8 +24,8 @@ exports.NewCardRequestZod = zod_1.z.object({
 });
 exports.CardSchemaZod = exports.NewCardRequestZod.extend({
     description: zod_1.z.string().min(3).max(255).trim().optional(),
-    createdAt: zod_1.z.date().default(() => new Date()),
-    updatedAt: zod_1.z.date().nullable().default(null),
+    createdAt: zod_1.z.string().default(() => new Date().toString()),
+    updatedAt: zod_1.z.string().nullable().default(null),
     _destroy: zod_1.z.boolean().default(false),
 });
 // ----------------------------------Column --------------------------------------
@@ -38,8 +38,8 @@ exports.NewColumnRequestZod = zod_1.z.object({
 exports.ColumnSchemaZod = exports.NewColumnRequestZod.extend({
     cards: zod_1.z.array(exports.CardSchemaZod).default([]),
     cardOrderIds: zod_1.z.array(zod_1.z.string()).default([]),
-    createdAt: zod_1.z.date().default(() => new Date()),
-    updatedAt: zod_1.z.date().nullable().default(null),
+    createdAt: zod_1.z.string().default(() => new Date().toString()),
+    updatedAt: zod_1.z.string().nullable().default(null),
     _destroy: zod_1.z.boolean().default(false),
 });
 // ----------------------------------Board --------------------------------------
@@ -55,7 +55,7 @@ exports.BoardSchemaZod = exports.NewBoardRequestZod.extend({
     memberIds: zod_1.z.array(zod_1.z.string()).default([]),
     columns: zod_1.z.array(exports.ColumnSchemaZod).default([]),
     columnOrderIds: zod_1.z.array(zod_1.z.string()).default([]),
-    createdAt: zod_1.z.date().default(() => new Date()),
-    updatedAt: zod_1.z.date().nullable().default(null),
+    createdAt: zod_1.z.string().default(() => new Date().toString()),
+    updatedAt: zod_1.z.string().nullable().default(null),
     _destroy: zod_1.z.boolean().default(false),
 });
