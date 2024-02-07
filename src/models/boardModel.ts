@@ -46,8 +46,11 @@ const findOneById = async (id: ObjectId) => {
     }
 };
 
-const updateOneById = async (id: ObjectId, updatedData: NewBoardRequestType) => {
+const updateOneById = async (id: ObjectId, updatedData: BoardSchemaType) => {
     try {
+        console.log('----------------------------------');
+        console.log(updatedData);
+        console.log('----------------------------------');
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
                 delete updatedData[key as keyof NewBoardRequestType];
@@ -67,7 +70,7 @@ const deleteOneById = async (id: string) => {
     try {
         const board = await db.collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(id) });
         if (!board) throw new Error('Board not found');
-        console.log('board model------------------------------------------', board.columnOrderIds)
+        console.log('board model------------------------------------------', board.columnOrderIds);
         if (board.columnOrderIds && board.columnOrderIds.length > 0) {
             const columns = await db
                 .collection(COLUMN_COLLECTION_NAME)
@@ -77,7 +80,7 @@ const deleteOneById = async (id: string) => {
                     },
                 })
                 .toArray();
-            console.log('delete columns',columns)
+            console.log('delete columns', columns);
             const allCardIds = columns.reduce((acc, column) => {
                 if (column.cardOrderIds && column.cardOrderIds.length > 0) {
                     const cardIds = column.cardOrderIds.map((id: string) => new ObjectId(id));
@@ -85,7 +88,7 @@ const deleteOneById = async (id: string) => {
                 }
                 return acc;
             }, []);
-            console.log('delete allCardIds',allCardIds)
+            console.log('delete allCardIds', allCardIds);
             if (allCardIds.length > 0) {
                 await db.collection(CARD_COLLECTION_NAME).deleteMany({
                     _id: { $in: allCardIds },
@@ -100,7 +103,7 @@ const deleteOneById = async (id: string) => {
         const result = await db.collection(BOARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(id) });
         return result;
     } catch (error) {
-        console.log(error)
+        console.log(error);
         throw new Error('Delete Board Failed');
     }
 };
@@ -120,16 +123,18 @@ const getBoardById = async (id: string) => {
                     $lookup: {
                         from: columnModel.COLUMN_COLLECTION_NAME,
                         let: { boardId: { $toString: '$_id' } },
-                        pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
                         as: 'columns',
-                    },
-                },
-                {
-                    $lookup: {
-                        from: cardModel.CARD_COLLECTION_NAME,
-                        localField: '_id',
-                        foreignField: 'boardId',
-                        as: 'cards',
+                        pipeline: [
+                            { $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } },
+                            {
+                                $lookup: {
+                                    from: cardModel.CARD_COLLECTION_NAME,
+                                    let: { columnId: { $toString: '$_id' } },
+                                    as: 'cards',
+                                    pipeline: [{ $match: { $expr: { $eq: ['$columnId', '$$columnId'] } } }],
+                                },
+                            },
+                        ],
                     },
                 },
             ])

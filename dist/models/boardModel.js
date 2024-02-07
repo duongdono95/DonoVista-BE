@@ -53,6 +53,9 @@ const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log('----------------------------------');
+        console.log(updatedData);
+        console.log('----------------------------------');
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
                 delete updatedData[key];
@@ -126,16 +129,18 @@ const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                 $lookup: {
                     from: columnModel_1.columnModel.COLUMN_COLLECTION_NAME,
                     let: { boardId: { $toString: '$_id' } },
-                    pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
                     as: 'columns',
-                },
-            },
-            {
-                $lookup: {
-                    from: cardModel_1.cardModel.CARD_COLLECTION_NAME,
-                    localField: '_id',
-                    foreignField: 'boardId',
-                    as: 'cards',
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } },
+                        {
+                            $lookup: {
+                                from: cardModel_1.cardModel.CARD_COLLECTION_NAME,
+                                let: { columnId: { $toString: '$_id' } },
+                                as: 'cards',
+                                pipeline: [{ $match: { $expr: { $eq: ['$columnId', '$$columnId'] } } }],
+                            },
+                        },
+                    ],
                 },
             },
         ])
