@@ -12,7 +12,6 @@ const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 const getAllBoards = async () => {
     try {
         const result = await GET_DB().collection(BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
-        console.log(result);
         return result;
     } catch (error) {
         throw new Error('Get All Boards Failed');
@@ -68,7 +67,7 @@ const deleteOneById = async (id: string) => {
     try {
         const board = await db.collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(id) });
         if (!board) throw new Error('Board not found');
-
+        console.log('board model------------------------------------------', board.columnOrderIds)
         if (board.columnOrderIds && board.columnOrderIds.length > 0) {
             const columns = await db
                 .collection(COLUMN_COLLECTION_NAME)
@@ -78,7 +77,7 @@ const deleteOneById = async (id: string) => {
                     },
                 })
                 .toArray();
-
+            console.log('delete columns',columns)
             const allCardIds = columns.reduce((acc, column) => {
                 if (column.cardOrderIds && column.cardOrderIds.length > 0) {
                     const cardIds = column.cardOrderIds.map((id: string) => new ObjectId(id));
@@ -86,6 +85,7 @@ const deleteOneById = async (id: string) => {
                 }
                 return acc;
             }, []);
+            console.log('delete allCardIds',allCardIds)
             if (allCardIds.length > 0) {
                 await db.collection(CARD_COLLECTION_NAME).deleteMany({
                     _id: { $in: allCardIds },
@@ -97,10 +97,10 @@ const deleteOneById = async (id: string) => {
                 },
             });
         }
-
         const result = await db.collection(BOARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(id) });
         return result;
     } catch (error) {
+        console.log(error)
         throw new Error('Delete Board Failed');
     }
 };

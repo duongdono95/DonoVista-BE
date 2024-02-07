@@ -32,7 +32,6 @@ const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const validatedBoard = yield generalTypes_1.NewBoardRequestZod.safeParseAsync(req.body);
-        console.log(req.body);
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: http_status_codes_1.StatusCodes.BAD_REQUEST,
@@ -57,7 +56,7 @@ const updateBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         if (!boardId)
             throw new Error('Board Id is required');
         const requestedBoard = Object.assign(Object.assign({}, req.body), { slug: (0, formatter_1.slugify)(req.body.title) });
-        const validatedBoard = yield generalTypes_1.NewBoardRequestZod.safeParseAsync(requestedBoard);
+        const validatedBoard = yield generalTypes_1.BoardSchemaZod.safeParseAsync(requestedBoard);
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: http_status_codes_1.StatusCodes.BAD_REQUEST,

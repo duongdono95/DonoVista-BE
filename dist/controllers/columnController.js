@@ -45,9 +45,6 @@ const deleteColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
 const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const validateRequest = yield generalTypes_1.ColumnSchemaZod.safeParseAsync(req.body);
-        console.log(req.body);
-        if (!validateRequest.success)
-            console.log(validateRequest.error);
         if (!validateRequest.success)
             throw new Error('Validate Update Column Request Failed');
         const result = yield columnService_1.columnService.updateColumnById(req.params.id, validateRequest.data);

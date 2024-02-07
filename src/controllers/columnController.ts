@@ -35,8 +35,7 @@ const deleteColumnById = async (req: Request, res: Response, next: NextFunction)
 export const updateColumnById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const validateRequest = await ColumnSchemaZod.safeParseAsync(req.body);
-        console.log(req.body)
-        if(!validateRequest.success)console.log(validateRequest.error)
+
         if (!validateRequest.success) throw new Error('Validate Update Column Request Failed');
         const result = await columnService.updateColumnById(req.params.id, validateRequest.data);
         if (!result) throw new Error('Update Column Failed');

@@ -74,7 +74,7 @@ const deleteCard = async (cardId: ObjectId, columnId: ObjectId, boardId: ObjectI
             throw new Error('Delete Card Failed - Card Not Found In Required Column');
 
         session.startTransaction();
-        console.log('deleteCardResult');
+
         const deleteCardResult = await db.collection(CARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(cardId) });
         await db.collection(COLUMN_COLLECTION_NAME).updateOne(
             {

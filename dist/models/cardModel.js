@@ -81,7 +81,6 @@ const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void
         if (!column.cardOrderIds.toString().includes(cardId))
             throw new Error('Delete Card Failed - Card Not Found In Required Column');
         session.startTransaction();
-        console.log('deleteCardResult');
         const deleteCardResult = yield db.collection(exports.CARD_COLLECTION_NAME).deleteOne({ _id: new mongodb_1.ObjectId(cardId) });
         yield db.collection(columnModel_1.COLUMN_COLLECTION_NAME).updateOne({
             _id: new mongodb_1.ObjectId(columnId),

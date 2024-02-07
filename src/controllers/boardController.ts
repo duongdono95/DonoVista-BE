@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { NewBoardRequestZod } from '../zod/generalTypes';
+import { BoardSchemaZod, NewBoardRequestZod } from '../zod/generalTypes';
 import { StatusCodes } from 'http-status-codes';
 import { boardService } from '../services/boardService';
 import { slugify } from '../utils/formatter';
@@ -21,7 +21,6 @@ const getAllBoards = async (req: Request, res: Response, next: NextFunction) => 
 const createNew = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const validatedBoard = await NewBoardRequestZod.safeParseAsync(req.body);
-        console.log(req.body);
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: StatusCodes.BAD_REQUEST,
@@ -45,7 +44,7 @@ const updateBoardById = async (req: Request, res: Response, next: NextFunction) 
         const boardId = req.params.id;
         if (!boardId) throw new Error('Board Id is required');
         const requestedBoard = { ...req.body, slug: slugify(req.body.title) };
-        const validatedBoard = await NewBoardRequestZod.safeParseAsync(requestedBoard);
+        const validatedBoard = await BoardSchemaZod.safeParseAsync(requestedBoard);
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: StatusCodes.BAD_REQUEST,
