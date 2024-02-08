@@ -57,6 +57,12 @@ const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function*
 const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield boardModel_1.boardModel.getBoardById(boardId);
+        if (result[0] && result[0].columns && result[0].columnOrderIds) {
+            const board = result[0];
+            board.columns.sort((a, b) => {
+                return board.columnOrderIds.indexOf(a._id.toString()) - board.columnOrderIds.indexOf(b._id.toString());
+            });
+        }
         return result[0];
     }
     catch (error) {

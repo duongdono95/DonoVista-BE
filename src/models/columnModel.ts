@@ -2,17 +2,14 @@
 import { ColumnSchemaType, ColumnSchemaZod, NewColumnRequestType } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
-import { BOARD_COLLECTION_NAME } from './boardModel';
+import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
 import { CARD_COLLECTION_NAME } from './cardModel';
 
 export const COLUMN_COLLECTION_NAME = 'columns';
 const INVALID_UPDATED_FIELDS = ['_id', 'boardId', 'ownerId', 'createdAt'];
 
-const createNew = async (createColumnRequest: NewColumnRequestType) => {
-    const validatedRequest = ColumnSchemaZod.safeParse(createColumnRequest);
-    if (!validatedRequest.success) {
-        throw new Error('Validate Add New Column To Database Failed');
-    }
+const createNew = async (createColumnRequest: ColumnSchemaType) => {
+
     try {
         // validate the board
         const board = await GET_DB()
@@ -22,16 +19,17 @@ const createNew = async (createColumnRequest: NewColumnRequestType) => {
             });
         if (!board) throw new Error('Creating New Comlumn Error - Board Not Found');
         // create the column
-        const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(validatedRequest.data);
+        const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(createColumnRequest);
         if (!createdColumnResult) throw new Error('Creating New Column Error - Insert To Database Failed');
         // update the board
+        const newColumn = await GET_DB().collection(COLUMN_COLLECTION_NAME).findOne({ _id: createdColumnResult.insertedId });
         await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .updateOne(
-                { _id: new ObjectId(validatedRequest.data.boardId) },
+                { _id: new ObjectId(createColumnRequest.boardId) },
                 {
                     $push: {
-                        columns: createdColumnResult.insertedId,
+                        columns: newColumn,
                         columnOrderIds: createdColumnResult.insertedId,
                     },
                 },
@@ -93,10 +91,23 @@ const updateColumnById = async (id: ObjectId, updateColumnRequest: ColumnSchemaT
                 delete updateColumnRequest[key as keyof ColumnSchemaType];
             }
         });
-        const result = await GET_DB()
+        const columnUpdateResult  = await GET_DB()
             .collection(COLUMN_COLLECTION_NAME)
             .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: updateColumnRequest }, { returnDocument: 'after' });
-        return result;
+        if(!columnUpdateResult) throw new Error('Update Column Failed');
+        const board = await boardModel.findOneById(new ObjectId(columnUpdateResult.boardId))
+        if(!board) throw new Error('Update Column Failed - Board Not Found');
+        const updatedBoard = board.columns.map((column: any) => (column._id.toString() === columnUpdateResult._id.toString() ? columnUpdateResult : column))
+        const updatedBoardResult = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+            {
+                _id: new ObjectId(columnUpdateResult.boardId),
+            }, {
+                $set: {
+                    columns: updatedBoard,
+                },
+            }, { returnDocument: 'after'
+        })
+        return updatedBoardResult ;
     } catch (error) {}
 };
 

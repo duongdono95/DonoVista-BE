@@ -4,7 +4,7 @@ import { columnService } from '../services/columnService';
 
 const createNew = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const validateRequest = await NewColumnRequestZod.safeParseAsync(req.body);
+        const validateRequest = await ColumnSchemaZod.safeParseAsync(req.body);
         if (!validateRequest.success) {
             throw new Error('Validate Create New Column Request Failed');
         }
@@ -35,7 +35,6 @@ const deleteColumnById = async (req: Request, res: Response, next: NextFunction)
 export const updateColumnById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const validateRequest = await ColumnSchemaZod.safeParseAsync(req.body);
-
         if (!validateRequest.success) throw new Error('Validate Update Column Request Failed');
         const result = await columnService.updateColumnById(req.params.id, validateRequest.data);
         if (!result) throw new Error('Update Column Failed');

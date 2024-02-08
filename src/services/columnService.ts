@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb';
 import { columnModel } from '../models/columnModel';
 import { ColumnSchemaType, NewColumnRequestType } from '../zod/generalTypes';
 
-const createNew = async (validatedRequest: NewColumnRequestType) => {
+const createNew = async (validatedRequest: ColumnSchemaType) => {
     try {
         const result = await columnModel.createNew(validatedRequest);
         return result;

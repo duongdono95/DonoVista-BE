@@ -54,6 +54,7 @@ const updateBoardById = async (req: Request, res: Response, next: NextFunction) 
         }
         const updatedBoard = await boardService.updateBoardById(boardId, validatedBoard.data);
         if (!updatedBoard) throw new Error('Update Board Failed');
+
         res.status(200).json({
             code: 200,
             message: 'Updated Board Successfully',

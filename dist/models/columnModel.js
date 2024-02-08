@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.columnModel = exports.COLUMN_COLLECTION_NAME = void 0;
-const generalTypes_1 = require("../zod/generalTypes");
 const mongodb_1 = require("../config/mongodb");
 const mongodb_2 = require("mongodb");
 const boardModel_1 = require("./boardModel");
@@ -18,10 +17,6 @@ const cardModel_1 = require("./cardModel");
 exports.COLUMN_COLLECTION_NAME = 'columns';
 const INVALID_UPDATED_FIELDS = ['_id', 'boardId', 'ownerId', 'createdAt'];
 const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, function* () {
-    const validatedRequest = generalTypes_1.ColumnSchemaZod.safeParse(createColumnRequest);
-    if (!validatedRequest.success) {
-        throw new Error('Validate Add New Column To Database Failed');
-    }
     try {
         // validate the board
         const board = yield (0, mongodb_1.GET_DB)()
@@ -32,15 +27,16 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
         if (!board)
             throw new Error('Creating New Comlumn Error - Board Not Found');
         // create the column
-        const createdColumnResult = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).insertOne(validatedRequest.data);
+        const createdColumnResult = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).insertOne(createColumnRequest);
         if (!createdColumnResult)
             throw new Error('Creating New Column Error - Insert To Database Failed');
         // update the board
+        const newColumn = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOne({ _id: createdColumnResult.insertedId });
         yield (0, mongodb_1.GET_DB)()
             .collection(boardModel_1.BOARD_COLLECTION_NAME)
-            .updateOne({ _id: new mongodb_2.ObjectId(validatedRequest.data.boardId) }, {
+            .updateOne({ _id: new mongodb_2.ObjectId(createColumnRequest.boardId) }, {
             $push: {
-                columns: createdColumnResult.insertedId,
+                columns: newColumn,
                 columnOrderIds: createdColumnResult.insertedId,
             },
         });
@@ -96,10 +92,26 @@ const updateColumnById = (id, updateColumnRequest) => __awaiter(void 0, void 0, 
                 delete updateColumnRequest[key];
             }
         });
-        const result = yield (0, mongodb_1.GET_DB)()
+        const columnUpdateResult = yield (0, mongodb_1.GET_DB)()
             .collection(exports.COLUMN_COLLECTION_NAME)
             .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updateColumnRequest }, { returnDocument: 'after' });
-        return result;
+        if (!columnUpdateResult)
+            throw new Error('Update Column Failed');
+        const board = yield boardModel_1.boardModel.findOneById(new mongodb_2.ObjectId(columnUpdateResult.boardId));
+        if (!board)
+            throw new Error('Update Column Failed - Board Not Found');
+        const updatedBoard = board.columns.map((column) => (column._id.toString() === columnUpdateResult._id.toString() ? columnUpdateResult : column));
+        const updatedBoardResult = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOneAndUpdate({
+            _id: new mongodb_2.ObjectId(columnUpdateResult.boardId),
+        }, {
+            $set: {
+                columns: updatedBoard,
+            },
+        }, { returnDocument: 'after'
+        });
+        console.log(updatedBoard);
+        console.log(updatedBoardResult);
+        return columnUpdateResult;
     }
     catch (error) { }
 });

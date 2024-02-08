@@ -45,6 +45,12 @@ const deleteBoardById = async (boardId: string) => {
 const getBoardById = async (boardId: string) => {
     try {
         const result = await boardModel.getBoardById(boardId);
+        if(result[0] && result[0].columns && result[0].columnOrderIds) {
+            const board = result[0];
+            board.columns.sort((a: any, b: any) => {
+                return board.columnOrderIds.indexOf(a._id.toString()) - board.columnOrderIds.indexOf(b._id.toString());
+            })
+        }
         return result[0];
     } catch (error) {
         throw error;

@@ -53,9 +53,6 @@ const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log('----------------------------------');
-        console.log(updatedData);
-        console.log('----------------------------------');
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
                 delete updatedData[key];
@@ -76,7 +73,6 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         const board = yield db.collection(exports.BOARD_COLLECTION_NAME).findOne({ _id: new mongodb_2.ObjectId(id) });
         if (!board)
             throw new Error('Board not found');
-        console.log('board model------------------------------------------', board.columnOrderIds);
         if (board.columnOrderIds && board.columnOrderIds.length > 0) {
             const columns = yield db
                 .collection(columnModel_1.COLUMN_COLLECTION_NAME)
@@ -86,7 +82,6 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                 },
             })
                 .toArray();
-            console.log('delete columns', columns);
             const allCardIds = columns.reduce((acc, column) => {
                 if (column.cardOrderIds && column.cardOrderIds.length > 0) {
                     const cardIds = column.cardOrderIds.map((id) => new mongodb_2.ObjectId(id));
@@ -94,7 +89,6 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 return acc;
             }, []);
-            console.log('delete allCardIds', allCardIds);
             if (allCardIds.length > 0) {
                 yield db.collection(cardModel_1.CARD_COLLECTION_NAME).deleteMany({
                     _id: { $in: allCardIds },
@@ -110,7 +104,6 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         return result;
     }
     catch (error) {
-        console.log(error);
         throw new Error('Delete Board Failed');
     }
 });
