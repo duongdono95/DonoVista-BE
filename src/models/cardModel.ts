@@ -1,11 +1,12 @@
 import { ObjectId } from 'mongodb';
 import { GET_DB, START_SESSION } from '../config/mongodb';
-import { CardSchemaZod, NewCardRequestType } from '../zod/generalTypes';
+import { CardSchemaZod } from '../zod/generalTypes'
 import { BOARD_COLLECTION_NAME } from './boardModel';
 import { COLUMN_COLLECTION_NAME } from './columnModel';
+import { z } from "zod";
 
 export const CARD_COLLECTION_NAME = 'cards';
-const createNew = async (createCardRequest: NewCardRequestType) => {
+const createNew = async (createCardRequest: z.infer<typeof CardSchemaZod>) => {
     const validatedRequest = CardSchemaZod.safeParse(createCardRequest);
     if (!validatedRequest.success) {
         throw new Error('Validate Add New Column To Database Failed');
@@ -102,8 +103,22 @@ const deleteCard = async (cardId: ObjectId, columnId: ObjectId, boardId: ObjectI
     }
 };
 
+const updateCard = async (cardId: ObjectId, updateCard: z.infer<typeof CardSchemaZod>) => {
+    try {
+        const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
+            { _id: new ObjectId(cardId) },
+            { $set: updateCard },
+            { returnDocument: 'after' },
+        );
+        return result
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const cardModel = {
     createNew,
     CARD_COLLECTION_NAME,
     deleteCard,
+    updateCard
 };

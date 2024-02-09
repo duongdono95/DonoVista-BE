@@ -1,8 +1,10 @@
 import { ObjectId } from 'mongodb';
 import { columnModel } from '../models/columnModel';
-import { ColumnSchemaType, NewColumnRequestType } from '../zod/generalTypes';
+import {  ColumnSchemaZod, ColumnSchemaZodWithId } from "../zod/generalTypes";
+import { z } from "zod";
 
-const createNew = async (validatedRequest: ColumnSchemaType) => {
+
+const createNew = async (validatedRequest: z.infer<typeof ColumnSchemaZod>) => {
     try {
         const result = await columnModel.createNew(validatedRequest);
         return result;
@@ -19,17 +21,27 @@ const deleteColumnById = async (columnId: string, boardId: string) => {
     }
 };
 
-const updateColumnById = (id: string, validatedRequest: ColumnSchemaType) => {
+const updateColumnById = async (id: string, validatedRequest: z.infer<typeof ColumnSchemaZod>) => {
     try {
-        const result = columnModel.updateColumnById(new ObjectId(id), validatedRequest);
+        const result = await columnModel.updateColumnById(new ObjectId(id), validatedRequest);
         return result;
     } catch (error) {
         throw error;
     }
 };
 
+const updateColumnInBulk = async (originalColumn: z.infer<typeof ColumnSchemaZodWithId>, overColumn: z.infer<typeof ColumnSchemaZodWithId> ) => {
+    try {
+        const result = await columnModel.updateColumnInBulk(originalColumn, overColumn);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
+    updateColumnInBulk
 };

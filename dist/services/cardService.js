@@ -30,7 +30,17 @@ const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void
         throw error;
     }
 });
+const updateCard = (cardId, updateCard) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield cardModel_1.cardModel.updateCard(new mongodb_1.ObjectId(cardId), updateCard);
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
 exports.cardService = {
     createNew,
     deleteCard,
+    updateCard,
 };

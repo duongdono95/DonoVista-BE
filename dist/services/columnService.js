@@ -30,17 +30,27 @@ const deleteColumnById = (columnId, boardId) => __awaiter(void 0, void 0, void 0
         throw error;
     }
 });
-const updateColumnById = (id, validatedRequest) => {
+const updateColumnById = (id, validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = columnModel_1.columnModel.updateColumnById(new mongodb_1.ObjectId(id), validatedRequest);
+        const result = yield columnModel_1.columnModel.updateColumnById(new mongodb_1.ObjectId(id), validatedRequest);
         return result;
     }
     catch (error) {
         throw error;
     }
-};
+});
+const updateColumnInBulk = (originalColumn, overColumn) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield columnModel_1.columnModel.updateColumnInBulk(originalColumn, overColumn);
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
 exports.columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
+    updateColumnInBulk
 };

@@ -1,9 +1,10 @@
 import { ObjectId } from 'mongodb';
 import { columnModel } from '../models/columnModel';
-import { NewCardRequestType } from '../zod/generalTypes';
+import { CardSchemaZod } from '../zod/generalTypes';
 import { cardModel } from '../models/cardModel';
+import { z } from "zod";
 
-const createNew = async (validatedRequest: NewCardRequestType) => {
+const createNew = async (validatedRequest: z.infer<typeof CardSchemaZod>) => {
     try {
         const result = await cardModel.createNew(validatedRequest);
         return result;
@@ -21,7 +22,18 @@ const deleteCard = async (cardId: string, columnId: string, boardId: string) => 
     }
 };
 
+const updateCard = async (cardId: string, updateCard: z.infer<typeof CardSchemaZod>) => {
+    try {
+        const result = await cardModel.updateCard(new ObjectId(cardId), updateCard);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
 export const cardService = {
     createNew,
     deleteCard,
+    updateCard,
 };

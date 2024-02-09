@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { BoardSchemaType, BoardSchemaZod, NewBoardRequestType, NewBoardRequestZod } from '../zod/generalTypes';
-import { GET_DB, START_SESSION } from '../config/mongodb';
+import {  BoardSchemaZod } from '../zod/generalTypes'
+import { GET_DB } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
 import { CARD_COLLECTION_NAME, cardModel } from './cardModel';
@@ -18,7 +18,7 @@ const getAllBoards = async () => {
     }
 };
 
-const createNew = async (board: z.infer<typeof NewBoardRequestZod>) => {
+const createNew = async (board: z.infer<typeof BoardSchemaZod>) => {
     const validatedBoard = BoardSchemaZod.safeParse(board);
     try {
         if (!validatedBoard.success) {
@@ -46,11 +46,12 @@ const findOneById = async (id: ObjectId) => {
     }
 };
 
-const updateOneById = async (id: ObjectId, updatedData: BoardSchemaType) => {
+const updateOneById = async (id: ObjectId, updatedData: z.infer<typeof BoardSchemaZod>) => {
+    console.log('board Model', updatedData)
     try {
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete updatedData[key as keyof NewBoardRequestType];
+                delete updatedData[key as keyof z.infer<typeof BoardSchemaZod>];
             }
         });
         const result = await GET_DB()
@@ -97,6 +98,7 @@ const deleteOneById = async (id: string) => {
             });
         }
         const result = await db.collection(BOARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(id) });
+
         return result;
     } catch (error) {
 
@@ -135,7 +137,6 @@ const getBoardById = async (id: string) => {
                 },
             ])
             .toArray();
-
         return result;
     } catch (error) {
         throw new Error('Delete Board Failed');

@@ -1,14 +1,15 @@
 
-import { ColumnSchemaType, ColumnSchemaZod, NewColumnRequestType } from '../zod/generalTypes';
+import { ColumnSchemaZod, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
 import { CARD_COLLECTION_NAME } from './cardModel';
+import { z } from "zod";
 
 export const COLUMN_COLLECTION_NAME = 'columns';
 const INVALID_UPDATED_FIELDS = ['_id', 'boardId', 'ownerId', 'createdAt'];
 
-const createNew = async (createColumnRequest: ColumnSchemaType) => {
+const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) => {
 
     try {
         // validate the board
@@ -84,36 +85,68 @@ const deleteColumnById = async (columnId: ObjectId, boardId: ObjectId) => {
         await session.endSession();
     }
 };
-const updateColumnById = async (id: ObjectId, updateColumnRequest: ColumnSchemaType) => {
+const updateColumnById = async (id: ObjectId, updateColumnRequest: z.infer<typeof ColumnSchemaZod>) => {
     try {
         Object.keys(updateColumnRequest).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete updateColumnRequest[key as keyof ColumnSchemaType];
+                delete updateColumnRequest[key as keyof z.infer<typeof ColumnSchemaZod>];
             }
         });
         const columnUpdateResult  = await GET_DB()
             .collection(COLUMN_COLLECTION_NAME)
             .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: updateColumnRequest }, { returnDocument: 'after' });
-        if(!columnUpdateResult) throw new Error('Update Column Failed');
-        const board = await boardModel.findOneById(new ObjectId(columnUpdateResult.boardId))
-        if(!board) throw new Error('Update Column Failed - Board Not Found');
-        const updatedBoard = board.columns.map((column: any) => (column._id.toString() === columnUpdateResult._id.toString() ? columnUpdateResult : column))
-        const updatedBoardResult = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
-            {
-                _id: new ObjectId(columnUpdateResult.boardId),
-            }, {
-                $set: {
-                    columns: updatedBoard,
-                },
-            }, { returnDocument: 'after'
-        })
-        return updatedBoardResult ;
+            if(!columnUpdateResult) throw new Error('Update Column Failed');
+
+        return columnUpdateResult ;
     } catch (error) {}
 };
-
+const updateColumnInBulk = async (originalColumn: z.infer<typeof ColumnSchemaZodWithId>, overColumn: z.infer<typeof ColumnSchemaZodWithId> ) => {
+    const session = await START_SESSION();
+    // console.log('originalColumn', originalColumn)
+    // console.log('overColumn', overColumn)
+    try {
+        session.startTransaction();
+        Object.keys(originalColumn).forEach(key => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete originalColumn[key as keyof z.infer<typeof ColumnSchemaZod>];
+            }
+        });
+        Object.keys(overColumn).forEach(key => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete overColumn[key as keyof z.infer<typeof ColumnSchemaZod>];
+            }
+        });
+        if(originalColumn._id.toString() === overColumn._id) {
+            await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
+                { _id: new ObjectId(originalColumn._id) },
+                { $set: overColumn },
+                {session}
+            )
+        } else {
+            await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
+                { _id: new ObjectId(originalColumn._id) },
+                { $set: originalColumn },
+                {session}
+            )
+            await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
+                { _id: new ObjectId(overColumn._id) },
+                { $set: overColumn },
+                {session}
+            )
+        }
+        await session.commitTransaction();
+        return {message: 'Update Column In Bulk Successfully'};
+    } catch (error) {
+        await session.abortTransaction()
+        throw error;
+    } finally {
+        await session.endSession();
+    }
+}
 export const columnModel = {
     createNew,
     COLUMN_COLLECTION_NAME,
     deleteColumnById,
     updateColumnById,
+    updateColumnInBulk
 };

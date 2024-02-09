@@ -52,6 +52,7 @@ const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('board Model', updatedData);
     try {
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {

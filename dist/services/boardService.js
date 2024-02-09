@@ -36,6 +36,7 @@ const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, functi
 });
 const updateBoardById = (boardId, validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log('board Service', validatedRequest);
         const result = yield boardModel_1.boardModel.updateOneById(new mongodb_1.ObjectId(boardId), validatedRequest);
         return result;
     }

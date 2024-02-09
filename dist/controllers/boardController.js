@@ -13,7 +13,6 @@ exports.boardController = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
 const http_status_codes_1 = require("http-status-codes");
 const boardService_1 = require("../services/boardService");
-const formatter_1 = require("../utils/formatter");
 const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const boards = yield boardService_1.boardService.getAllBoards();
@@ -31,7 +30,7 @@ const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
 });
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validatedBoard = yield generalTypes_1.NewBoardRequestZod.safeParseAsync(req.body);
+        const validatedBoard = yield generalTypes_1.BoardSchemaZod.safeParseAsync(req.body);
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: http_status_codes_1.StatusCodes.BAD_REQUEST,
@@ -55,8 +54,7 @@ const updateBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         const boardId = req.params.id;
         if (!boardId)
             throw new Error('Board Id is required');
-        const requestedBoard = Object.assign(Object.assign({}, req.body), { slug: (0, formatter_1.slugify)(req.body.title) });
-        const validatedBoard = yield generalTypes_1.BoardSchemaZod.safeParseAsync(requestedBoard);
+        const validatedBoard = yield generalTypes_1.BoardSchemaZod.safeParseAsync(req.body);
         if (!validatedBoard.success) {
             return res.status(200).json({
                 code: http_status_codes_1.StatusCodes.BAD_REQUEST,

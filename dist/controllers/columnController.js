@@ -61,8 +61,34 @@ const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.updateColumnById = updateColumnById;
+const updateColumnInBulk = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        console.log(req.body);
+        if (!req.body)
+            throw new Error('Update Card In Bulk Request missing required fields');
+        const validatedRequest = {
+            originalColumn: yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.originalColumn),
+            overColumn: yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.overColumn),
+        };
+        if (!validatedRequest.originalColumn.success || !validatedRequest.overColumn.success)
+            throw new Error('Validate Update Card In Bulk Request Failed');
+        console.log(validatedRequest.originalColumn.data, validatedRequest.overColumn.data);
+        const result = yield columnService_1.columnService.updateColumnInBulk(validatedRequest.originalColumn.data, validatedRequest.overColumn.data);
+        if (!result)
+            throw new Error('Update Card In Bulk Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Update Card In Bulk Successfully',
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 exports.columnController = {
     createNew,
     deleteColumnById,
     updateColumnById: exports.updateColumnById,
+    updateColumnInBulk
 };

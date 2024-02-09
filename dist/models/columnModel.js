@@ -97,27 +97,48 @@ const updateColumnById = (id, updateColumnRequest) => __awaiter(void 0, void 0, 
             .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updateColumnRequest }, { returnDocument: 'after' });
         if (!columnUpdateResult)
             throw new Error('Update Column Failed');
-        const board = yield boardModel_1.boardModel.findOneById(new mongodb_2.ObjectId(columnUpdateResult.boardId));
-        if (!board)
-            throw new Error('Update Column Failed - Board Not Found');
-        const updatedBoard = board.columns.map((column) => (column._id.toString() === columnUpdateResult._id.toString() ? columnUpdateResult : column));
-        const updatedBoardResult = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOneAndUpdate({
-            _id: new mongodb_2.ObjectId(columnUpdateResult.boardId),
-        }, {
-            $set: {
-                columns: updatedBoard,
-            },
-        }, { returnDocument: 'after'
-        });
-        console.log(updatedBoard);
-        console.log(updatedBoardResult);
         return columnUpdateResult;
     }
     catch (error) { }
+});
+const updateColumnInBulk = (originalColumn, overColumn) => __awaiter(void 0, void 0, void 0, function* () {
+    const session = yield (0, mongodb_1.START_SESSION)();
+    // console.log('originalColumn', originalColumn)
+    // console.log('overColumn', overColumn)
+    try {
+        session.startTransaction();
+        Object.keys(originalColumn).forEach(key => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete originalColumn[key];
+            }
+        });
+        Object.keys(overColumn).forEach(key => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete overColumn[key];
+            }
+        });
+        if (originalColumn._id.toString() === overColumn._id) {
+            yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(originalColumn._id) }, { $set: overColumn }, { session });
+        }
+        else {
+            yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(originalColumn._id) }, { $set: originalColumn }, { session });
+            yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(overColumn._id) }, { $set: overColumn }, { session });
+        }
+        yield session.commitTransaction();
+        return { message: 'Update Column In Bulk Successfully' };
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        throw error;
+    }
+    finally {
+        yield session.endSession();
+    }
 });
 exports.columnModel = {
     createNew,
     COLUMN_COLLECTION_NAME: exports.COLUMN_COLLECTION_NAME,
     deleteColumnById,
     updateColumnById,
+    updateColumnInBulk
 };
