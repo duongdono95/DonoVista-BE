@@ -1,16 +1,14 @@
-
-import { ColumnSchemaZod, ColumnSchemaZodWithId } from '../zod/generalTypes';
+import { CardSchemaZodWithID, ColumnSchemaZod, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
-import { CARD_COLLECTION_NAME } from './cardModel';
-import { z } from "zod";
+import { CARD_COLLECTION_NAME, cardModel } from './cardModel';
+import { z } from 'zod';
 
 export const COLUMN_COLLECTION_NAME = 'columns';
-const INVALID_UPDATED_FIELDS = ['_id', 'boardId', 'ownerId', 'createdAt'];
+const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 
 const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) => {
-
     try {
         // validate the board
         const board = await GET_DB()
@@ -23,7 +21,9 @@ const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) =
         const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(createColumnRequest);
         if (!createdColumnResult) throw new Error('Creating New Column Error - Insert To Database Failed');
         // update the board
-        const newColumn = await GET_DB().collection(COLUMN_COLLECTION_NAME).findOne({ _id: createdColumnResult.insertedId });
+        const newColumn = await GET_DB()
+            .collection(COLUMN_COLLECTION_NAME)
+            .findOne({ _id: createdColumnResult.insertedId });
         await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .updateOne(
@@ -38,6 +38,43 @@ const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) =
         return createdColumnResult;
     } catch (error) {
         throw new Error('Create New Column Failed');
+    }
+};
+
+const getColumnById = async (id: string) => {
+    try {
+        const column = await GET_DB()
+            .collection(COLUMN_COLLECTION_NAME)
+            .aggregate([
+                {
+                    $match: {
+                        _id: new ObjectId(id),
+                        _destroy: false,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: CARD_COLLECTION_NAME,
+                        let: { columnId: { $toString: '$_id' } },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [{ $eq: ['$columnId', '$$columnId'] }, { $eq: ['$_destroy', false] }],
+                                    },
+                                },
+                            },
+                        ],
+                        as: 'cards',
+                    },
+                },
+            ])
+            .toArray();
+        const newColumn = column[0];
+        updateColumnById(new ObjectId(newColumn._id), newColumn as z.infer<typeof ColumnSchemaZod>);
+        return newColumn;
+    } catch (error) {
+        throw new Error('Get Column By Id Failed');
     }
 };
 
@@ -92,61 +129,110 @@ const updateColumnById = async (id: ObjectId, updateColumnRequest: z.infer<typeo
                 delete updateColumnRequest[key as keyof z.infer<typeof ColumnSchemaZod>];
             }
         });
-        const columnUpdateResult  = await GET_DB()
+        const columnUpdateResult = await GET_DB()
             .collection(COLUMN_COLLECTION_NAME)
-            .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: updateColumnRequest }, { returnDocument: 'after' });
-            if(!columnUpdateResult) throw new Error('Update Column Failed');
+            .findOneAndUpdate(
+                { _id: new ObjectId(id) },
+                { $set: { ...updateColumnRequest, updatedAt: new Date().toString() } },
+                { returnDocument: 'after' },
+            );
+        if (!columnUpdateResult) throw new Error('Update Column Failed');
 
-        return columnUpdateResult ;
+        return columnUpdateResult;
     } catch (error) {}
 };
-const updateColumnInBulk = async (originalColumn: z.infer<typeof ColumnSchemaZodWithId>, overColumn: z.infer<typeof ColumnSchemaZodWithId> ) => {
+const updateColumnCards = async (
+    startColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    endColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    activeCard: z.infer<typeof CardSchemaZodWithID>,
+) => {
     const session = await START_SESSION();
-    // console.log('originalColumn', originalColumn)
-    // console.log('overColumn', overColumn)
+    const startColumnId = startColumn._id;
+    const endColumnId = endColumn._id;
+    const activeCardId = activeCard._id;
     try {
         session.startTransaction();
-        Object.keys(originalColumn).forEach(key => {
+        Object.keys(startColumn).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete originalColumn[key as keyof z.infer<typeof ColumnSchemaZod>];
+                delete startColumn[key as keyof z.infer<typeof ColumnSchemaZod>];
             }
         });
-        Object.keys(overColumn).forEach(key => {
+        Object.keys(endColumn).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete overColumn[key as keyof z.infer<typeof ColumnSchemaZod>];
+                delete endColumn[key as keyof z.infer<typeof ColumnSchemaZod>];
             }
         });
-        if(originalColumn._id.toString() === overColumn._id) {
-            await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
-                { _id: new ObjectId(originalColumn._id) },
-                { $set: overColumn },
-                {session}
-            )
+        Object.keys(activeCard).forEach((key) => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete activeCard[key as keyof z.infer<typeof CardSchemaZodWithID>];
+            }
+        });
+        if (startColumnId === endColumnId) {
+            const test = await GET_DB()
+                .collection(COLUMN_COLLECTION_NAME)
+                .findOneAndUpdate(
+                    { _id: new ObjectId(startColumnId) },
+                    {
+                        $set: {
+                            ...startColumn,
+                            updatedAt: new Date().toString(),
+                        },
+                    },
+                    { session },
+                );
         } else {
-            await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
-                { _id: new ObjectId(originalColumn._id) },
-                { $set: originalColumn },
-                {session}
-            )
-            await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
-                { _id: new ObjectId(overColumn._id) },
-                { $set: overColumn },
-                {session}
-            )
+            const result1 = await GET_DB()
+                .collection(COLUMN_COLLECTION_NAME)
+                .findOneAndUpdate(
+                    { _id: new ObjectId(startColumnId) },
+                    {
+                        $set: {
+                            ...startColumn,
+                            updatedAt: new Date().toString(),
+                        },
+                    },
+                    { session },
+                );
+            const result2 = await GET_DB()
+                .collection(COLUMN_COLLECTION_NAME)
+                .findOneAndUpdate(
+                    { _id: new ObjectId(endColumnId) },
+                    {
+                        $set: {
+                            ...endColumn,
+                            updatedAt: new Date().toString(),
+                        },
+                    },
+                    { session },
+                );
+            const result3 = await GET_DB()
+                .collection(CARD_COLLECTION_NAME)
+                .findOneAndUpdate(
+                    { _id: new ObjectId(activeCardId) },
+                    {
+                        $set: {
+                            ...activeCard,
+                            updatedAt: new Date().toString(),
+                        },
+                    },
+                    { session },
+                );
         }
+        boardModel.getBoardById(endColumn.boardId);
         await session.commitTransaction();
-        return {message: 'Update Column In Bulk Successfully'};
+        return { message: 'Update Column Successfully' };
     } catch (error) {
-        await session.abortTransaction()
+        await session.abortTransaction();
         throw error;
     } finally {
         await session.endSession();
     }
-}
+};
 export const columnModel = {
-    createNew,
     COLUMN_COLLECTION_NAME,
+    createNew,
+    getColumnById,
     deleteColumnById,
     updateColumnById,
-    updateColumnInBulk
+    updateColumnCards,
 };

@@ -106,8 +106,13 @@ const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void
 });
 const updateCard = (cardId, updateCard) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, mongodb_2.GET_DB)().collection(exports.CARD_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_1.ObjectId(cardId) }, { $set: updateCard }, { returnDocument: 'after' });
-        return result;
+        const updateCardResult = yield (0, mongodb_2.GET_DB)()
+            .collection(exports.CARD_COLLECTION_NAME)
+            .findOneAndUpdate({ _id: new mongodb_1.ObjectId(cardId) }, {
+            $set: Object.assign(Object.assign({}, updateCard), { updatedAt: new Date().toString() }),
+        }, { returnDocument: 'after' });
+        columnModel_1.columnModel.getColumnById(updateCard.columnId);
+        return updateCardResult;
     }
     catch (error) {
         throw error;
@@ -117,5 +122,5 @@ exports.cardModel = {
     createNew,
     CARD_COLLECTION_NAME: exports.CARD_COLLECTION_NAME,
     deleteCard,
-    updateCard
+    updateCard,
 };

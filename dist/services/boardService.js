@@ -36,7 +36,6 @@ const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, functi
 });
 const updateBoardById = (boardId, validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log('board Service', validatedRequest);
         const result = yield boardModel_1.boardModel.updateOneById(new mongodb_1.ObjectId(boardId), validatedRequest);
         return result;
     }
@@ -58,13 +57,21 @@ const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function*
 const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield boardModel_1.boardModel.getBoardById(boardId);
-        if (result[0] && result[0].columns && result[0].columnOrderIds) {
-            const board = result[0];
+        if (result && result.columns && result.columnOrderIds) {
+            const board = result;
             board.columns.sort((a, b) => {
                 return board.columnOrderIds.indexOf(a._id.toString()) - board.columnOrderIds.indexOf(b._id.toString());
             });
+            board.columns.forEach((column) => {
+                if (column.cards && column.cardOrderIds) {
+                    column.cards.sort((a, b) => {
+                        return (column.cardOrderIds.indexOf(a._id.toString()) -
+                            column.cardOrderIds.indexOf(b._id.toString()));
+                    });
+                }
+            });
         }
-        return result[0];
+        return result;
     }
     catch (error) {
         throw error;

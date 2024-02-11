@@ -52,7 +52,6 @@ const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('board Model', updatedData);
     try {
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
@@ -61,7 +60,7 @@ const updateOneById = (id, updatedData) => __awaiter(void 0, void 0, void 0, fun
         });
         const result = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
-            .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updatedData }, { returnDocument: 'after' });
+            .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: Object.assign(Object.assign({}, updatedData), { updatedAt: new Date().toString() }) }, { returnDocument: 'after' });
         return result;
     }
     catch (error) {
@@ -110,7 +109,7 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, mongodb_1.GET_DB)()
+        const board = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
             .aggregate([
             {
@@ -139,6 +138,8 @@ const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
             },
         ])
             .toArray();
+        const result = yield updateOneById(new mongodb_2.ObjectId(board[0]._id), board[0]);
+        console.log(board[0].columns);
         return result;
     }
     catch (error) {

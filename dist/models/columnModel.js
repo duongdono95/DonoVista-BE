@@ -15,7 +15,7 @@ const mongodb_2 = require("mongodb");
 const boardModel_1 = require("./boardModel");
 const cardModel_1 = require("./cardModel");
 exports.COLUMN_COLLECTION_NAME = 'columns';
-const INVALID_UPDATED_FIELDS = ['_id', 'boardId', 'ownerId', 'createdAt'];
+const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // validate the board
@@ -31,7 +31,9 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
         if (!createdColumnResult)
             throw new Error('Creating New Column Error - Insert To Database Failed');
         // update the board
-        const newColumn = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOne({ _id: createdColumnResult.insertedId });
+        const newColumn = yield (0, mongodb_1.GET_DB)()
+            .collection(exports.COLUMN_COLLECTION_NAME)
+            .findOne({ _id: createdColumnResult.insertedId });
         yield (0, mongodb_1.GET_DB)()
             .collection(boardModel_1.BOARD_COLLECTION_NAME)
             .updateOne({ _id: new mongodb_2.ObjectId(createColumnRequest.boardId) }, {
@@ -44,6 +46,43 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
     }
     catch (error) {
         throw new Error('Create New Column Failed');
+    }
+});
+const getColumnById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const column = yield (0, mongodb_1.GET_DB)()
+            .collection(exports.COLUMN_COLLECTION_NAME)
+            .aggregate([
+            {
+                $match: {
+                    _id: new mongodb_2.ObjectId(id),
+                    _destroy: false,
+                },
+            },
+            {
+                $lookup: {
+                    from: cardModel_1.CARD_COLLECTION_NAME,
+                    let: { columnId: { $toString: '$_id' } },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [{ $eq: ['$columnId', '$$columnId'] }, { $eq: ['$_destroy', false] }],
+                                },
+                            },
+                        },
+                    ],
+                    as: 'cards',
+                },
+            },
+        ])
+            .toArray();
+        const newColumn = column[0];
+        updateColumnById(new mongodb_2.ObjectId(newColumn._id), newColumn);
+        return newColumn;
+    }
+    catch (error) {
+        throw new Error('Get Column By Id Failed');
     }
 });
 const deleteColumnById = (columnId, boardId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -94,38 +133,62 @@ const updateColumnById = (id, updateColumnRequest) => __awaiter(void 0, void 0, 
         });
         const columnUpdateResult = yield (0, mongodb_1.GET_DB)()
             .collection(exports.COLUMN_COLLECTION_NAME)
-            .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: updateColumnRequest }, { returnDocument: 'after' });
+            .findOneAndUpdate({ _id: new mongodb_2.ObjectId(id) }, { $set: Object.assign(Object.assign({}, updateColumnRequest), { updatedAt: new Date().toString() }) }, { returnDocument: 'after' });
         if (!columnUpdateResult)
             throw new Error('Update Column Failed');
         return columnUpdateResult;
     }
     catch (error) { }
 });
-const updateColumnInBulk = (originalColumn, overColumn) => __awaiter(void 0, void 0, void 0, function* () {
+const updateColumnCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, void 0, void 0, function* () {
     const session = yield (0, mongodb_1.START_SESSION)();
-    // console.log('originalColumn', originalColumn)
-    // console.log('overColumn', overColumn)
+    const startColumnId = startColumn._id;
+    const endColumnId = endColumn._id;
+    const activeCardId = activeCard._id;
     try {
         session.startTransaction();
-        Object.keys(originalColumn).forEach(key => {
+        Object.keys(startColumn).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete originalColumn[key];
+                delete startColumn[key];
             }
         });
-        Object.keys(overColumn).forEach(key => {
+        Object.keys(endColumn).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete overColumn[key];
+                delete endColumn[key];
             }
         });
-        if (originalColumn._id.toString() === overColumn._id) {
-            yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(originalColumn._id) }, { $set: overColumn }, { session });
+        Object.keys(activeCard).forEach((key) => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete activeCard[key];
+            }
+        });
+        if (startColumnId === endColumnId) {
+            const test = yield (0, mongodb_1.GET_DB)()
+                .collection(exports.COLUMN_COLLECTION_NAME)
+                .findOneAndUpdate({ _id: new mongodb_2.ObjectId(startColumnId) }, {
+                $set: Object.assign(Object.assign({}, startColumn), { updatedAt: new Date().toString() }),
+            }, { session });
         }
         else {
-            yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(originalColumn._id) }, { $set: originalColumn }, { session });
-            yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOneAndUpdate({ _id: new mongodb_2.ObjectId(overColumn._id) }, { $set: overColumn }, { session });
+            const result1 = yield (0, mongodb_1.GET_DB)()
+                .collection(exports.COLUMN_COLLECTION_NAME)
+                .findOneAndUpdate({ _id: new mongodb_2.ObjectId(startColumnId) }, {
+                $set: Object.assign(Object.assign({}, startColumn), { updatedAt: new Date().toString() }),
+            }, { session });
+            const result2 = yield (0, mongodb_1.GET_DB)()
+                .collection(exports.COLUMN_COLLECTION_NAME)
+                .findOneAndUpdate({ _id: new mongodb_2.ObjectId(endColumnId) }, {
+                $set: Object.assign(Object.assign({}, endColumn), { updatedAt: new Date().toString() }),
+            }, { session });
+            const result3 = yield (0, mongodb_1.GET_DB)()
+                .collection(cardModel_1.CARD_COLLECTION_NAME)
+                .findOneAndUpdate({ _id: new mongodb_2.ObjectId(activeCardId) }, {
+                $set: Object.assign(Object.assign({}, activeCard), { updatedAt: new Date().toString() }),
+            }, { session });
         }
+        boardModel_1.boardModel.getBoardById(endColumn.boardId);
         yield session.commitTransaction();
-        return { message: 'Update Column In Bulk Successfully' };
+        return { message: 'Update Column Successfully' };
     }
     catch (error) {
         yield session.abortTransaction();
@@ -136,9 +199,10 @@ const updateColumnInBulk = (originalColumn, overColumn) => __awaiter(void 0, voi
     }
 });
 exports.columnModel = {
-    createNew,
     COLUMN_COLLECTION_NAME: exports.COLUMN_COLLECTION_NAME,
+    createNew,
+    getColumnById,
     deleteColumnById,
     updateColumnById,
-    updateColumnInBulk
+    updateColumnCards,
 };

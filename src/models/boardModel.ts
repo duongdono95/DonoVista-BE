@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import {  BoardSchemaZod } from '../zod/generalTypes'
+import { BoardSchemaZod, BoardSchemaZodWithId } from '../zod/generalTypes';
 import { GET_DB } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
@@ -47,7 +47,6 @@ const findOneById = async (id: ObjectId) => {
 };
 
 const updateOneById = async (id: ObjectId, updatedData: z.infer<typeof BoardSchemaZod>) => {
-    console.log('board Model', updatedData)
     try {
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
@@ -56,8 +55,12 @@ const updateOneById = async (id: ObjectId, updatedData: z.infer<typeof BoardSche
         });
         const result = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
-            .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: updatedData }, { returnDocument: 'after' });
-            return result;
+            .findOneAndUpdate(
+                { _id: new ObjectId(id) },
+                { $set: { ...updatedData, updatedAt: new Date().toString() } },
+                { returnDocument: 'after' },
+            );
+        return result;
     } catch (error) {
         throw new Error('Update Board Failed');
     }
@@ -101,14 +104,13 @@ const deleteOneById = async (id: string) => {
 
         return result;
     } catch (error) {
-
         throw new Error('Delete Board Failed');
     }
 };
 
 const getBoardById = async (id: string) => {
     try {
-        const result = await GET_DB()
+        const board = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .aggregate([
                 {
@@ -137,6 +139,11 @@ const getBoardById = async (id: string) => {
                 },
             ])
             .toArray();
+        const result = await updateOneById(
+            new ObjectId(board[0]._id),
+            board[0] as z.infer<typeof BoardSchemaZodWithId>,
+        );
+        console.log(board[0].columns);
         return result;
     } catch (error) {
         throw new Error('Delete Board Failed');

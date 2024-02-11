@@ -26,7 +26,6 @@ const createNew = async (validatedRequest: z.infer<typeof BoardSchemaZod>) => {
 
 const updateBoardById = async (boardId: string, validatedRequest: z.infer<typeof BoardSchemaZod>) => {
     try {
-        console.log('board Service',validatedRequest)
         const result = await boardModel.updateOneById(new ObjectId(boardId), validatedRequest);
         return result;
     } catch (error) {
@@ -46,13 +45,23 @@ const deleteBoardById = async (boardId: string) => {
 const getBoardById = async (boardId: string) => {
     try {
         const result = await boardModel.getBoardById(boardId);
-        if(result[0] && result[0].columns && result[0].columnOrderIds) {
-            const board = result[0];
+        if (result && result.columns && result.columnOrderIds) {
+            const board = result;
             board.columns.sort((a: any, b: any) => {
                 return board.columnOrderIds.indexOf(a._id.toString()) - board.columnOrderIds.indexOf(b._id.toString());
-            })
+            });
+            board.columns.forEach((column: any) => {
+                if (column.cards && column.cardOrderIds) {
+                    column.cards.sort((a: any, b: any) => {
+                        return (
+                            column.cardOrderIds.indexOf(a._id.toString()) -
+                            column.cardOrderIds.indexOf(b._id.toString())
+                        );
+                    });
+                }
+            });
         }
-        return result[0];
+        return result;
     } catch (error) {
         throw error;
     }

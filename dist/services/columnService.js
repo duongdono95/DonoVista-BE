@@ -39,9 +39,9 @@ const updateColumnById = (id, validatedRequest) => __awaiter(void 0, void 0, voi
         throw error;
     }
 });
-const updateColumnInBulk = (originalColumn, overColumn) => __awaiter(void 0, void 0, void 0, function* () {
+const updateColumnCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield columnModel_1.columnModel.updateColumnInBulk(originalColumn, overColumn);
+        const result = yield columnModel_1.columnModel.updateColumnCards(startColumn, endColumn, activeCard);
         return result;
     }
     catch (error) {
@@ -52,5 +52,5 @@ exports.columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
-    updateColumnInBulk
+    updateColumnCards,
 };

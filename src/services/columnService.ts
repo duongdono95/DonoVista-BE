@@ -1,8 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { columnModel } from '../models/columnModel';
-import {  ColumnSchemaZod, ColumnSchemaZodWithId } from "../zod/generalTypes";
-import { z } from "zod";
-
+import { CardSchemaZodWithID, ColumnSchemaZod, ColumnSchemaZodWithId } from '../zod/generalTypes';
+import { z } from 'zod';
 
 const createNew = async (validatedRequest: z.infer<typeof ColumnSchemaZod>) => {
     try {
@@ -30,18 +29,22 @@ const updateColumnById = async (id: string, validatedRequest: z.infer<typeof Col
     }
 };
 
-const updateColumnInBulk = async (originalColumn: z.infer<typeof ColumnSchemaZodWithId>, overColumn: z.infer<typeof ColumnSchemaZodWithId> ) => {
+const updateColumnCards = async (
+    startColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    endColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    activeCard: z.infer<typeof CardSchemaZodWithID>,
+) => {
     try {
-        const result = await columnModel.updateColumnInBulk(originalColumn, overColumn);
+        const result = await columnModel.updateColumnCards(startColumn, endColumn, activeCard);
         return result;
     } catch (error) {
         throw error;
     }
-}
+};
 
 export const columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
-    updateColumnInBulk
+    updateColumnCards,
 };

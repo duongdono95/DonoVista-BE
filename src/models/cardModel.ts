@@ -1,11 +1,12 @@
 import { ObjectId } from 'mongodb';
 import { GET_DB, START_SESSION } from '../config/mongodb';
-import { CardSchemaZod } from '../zod/generalTypes'
+import { CardSchemaZod } from '../zod/generalTypes';
 import { BOARD_COLLECTION_NAME } from './boardModel';
-import { COLUMN_COLLECTION_NAME } from './columnModel';
-import { z } from "zod";
+import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
+import { z } from 'zod';
 
 export const CARD_COLLECTION_NAME = 'cards';
+
 const createNew = async (createCardRequest: z.infer<typeof CardSchemaZod>) => {
     const validatedRequest = CardSchemaZod.safeParse(createCardRequest);
     if (!validatedRequest.success) {
@@ -105,20 +106,28 @@ const deleteCard = async (cardId: ObjectId, columnId: ObjectId, boardId: ObjectI
 
 const updateCard = async (cardId: ObjectId, updateCard: z.infer<typeof CardSchemaZod>) => {
     try {
-        const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
-            { _id: new ObjectId(cardId) },
-            { $set: updateCard },
-            { returnDocument: 'after' },
-        );
-        return result
+        const updateCardResult = await GET_DB()
+            .collection(CARD_COLLECTION_NAME)
+            .findOneAndUpdate(
+                { _id: new ObjectId(cardId) },
+                {
+                    $set: {
+                        ...updateCard,
+                        updatedAt: new Date().toString(),
+                    },
+                },
+                { returnDocument: 'after' },
+            );
+        columnModel.getColumnById(updateCard.columnId);
+        return updateCardResult;
     } catch (error) {
         throw error;
     }
-}
+};
 
 export const cardModel = {
     createNew,
     CARD_COLLECTION_NAME,
     deleteCard,
-    updateCard
+    updateCard,
 };
