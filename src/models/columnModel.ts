@@ -21,17 +21,15 @@ const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) =
         const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(createColumnRequest);
         if (!createdColumnResult) throw new Error('Creating New Column Error - Insert To Database Failed');
         // update the board
-        const newColumn = await GET_DB()
-            .collection(COLUMN_COLLECTION_NAME)
-            .findOne({ _id: createdColumnResult.insertedId });
+
         await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .updateOne(
                 { _id: new ObjectId(createColumnRequest.boardId) },
                 {
                     $push: {
-                        columns: newColumn,
-                        columnOrderIds: createdColumnResult.insertedId,
+                        columns: {...createColumnRequest, _id: createdColumnResult.insertedId},
+                        columnOrderIds: createdColumnResult.insertedId.toString(),
                     },
                 },
             );

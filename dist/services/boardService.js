@@ -71,6 +71,7 @@ const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* ()
                 }
             });
         }
+        console.log(result);
         return result;
     }
     catch (error) {

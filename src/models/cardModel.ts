@@ -45,7 +45,7 @@ const createNew = async (createCardRequest: z.infer<typeof CardSchemaZod>) => {
                 { _id: new ObjectId(createCardRequest.columnId) },
                 {
                     $push: {
-                        cardOrderIds: createdCardResult.insertedId,
+                        cardOrderIds: createdCardResult.insertedId.toString(),
                         cards: { ...validatedRequest.data, _id: createdCardResult.insertedId },
                     },
                 },

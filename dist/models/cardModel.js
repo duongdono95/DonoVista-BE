@@ -52,7 +52,7 @@ const createNew = (createCardRequest) => __awaiter(void 0, void 0, void 0, funct
             .collection(columnModel_1.COLUMN_COLLECTION_NAME)
             .updateOne({ _id: new mongodb_1.ObjectId(createCardRequest.columnId) }, {
             $push: {
-                cardOrderIds: createdCardResult.insertedId,
+                cardOrderIds: createdCardResult.insertedId.toString(),
                 cards: Object.assign(Object.assign({}, validatedRequest.data), { _id: createdCardResult.insertedId }),
             },
         }, { session });

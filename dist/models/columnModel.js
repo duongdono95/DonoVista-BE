@@ -31,15 +31,12 @@ const createNew = (createColumnRequest) => __awaiter(void 0, void 0, void 0, fun
         if (!createdColumnResult)
             throw new Error('Creating New Column Error - Insert To Database Failed');
         // update the board
-        const newColumn = yield (0, mongodb_1.GET_DB)()
-            .collection(exports.COLUMN_COLLECTION_NAME)
-            .findOne({ _id: createdColumnResult.insertedId });
         yield (0, mongodb_1.GET_DB)()
             .collection(boardModel_1.BOARD_COLLECTION_NAME)
             .updateOne({ _id: new mongodb_2.ObjectId(createColumnRequest.boardId) }, {
             $push: {
-                columns: newColumn,
-                columnOrderIds: createdColumnResult.insertedId,
+                columns: Object.assign(Object.assign({}, createColumnRequest), { _id: createdColumnResult.insertedId }),
+                columnOrderIds: createdColumnResult.insertedId.toString(),
             },
         });
         return createdColumnResult;
