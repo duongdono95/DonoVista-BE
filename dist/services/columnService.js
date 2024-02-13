@@ -48,9 +48,19 @@ const updateColumnCards = (startColumn, endColumn, activeCard) => __awaiter(void
         throw error;
     }
 });
+const duplicateColumn = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield columnModel_1.columnModel.duplicateColumn(validatedRequest);
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
 exports.columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
     updateColumnCards,
+    duplicateColumn
 };

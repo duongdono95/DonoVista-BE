@@ -1,7 +1,7 @@
-import { CardSchemaZodWithID, ColumnSchemaZod, ColumnSchemaZodWithId } from '../zod/generalTypes';
+import { BoardSchemaZod, CardSchemaZodWithID, ColumnSchemaZod, ColumnSchemaZodWithId, ComponentTypeEnum, VisibilityTypeEnum } from '../zod/generalTypes'
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
-import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
+import { BOARD_COLLECTION_NAME, boardModel } from './boardModel'
 import { CARD_COLLECTION_NAME, cardModel } from './cardModel';
 import { z } from 'zod';
 
@@ -9,7 +9,9 @@ export const COLUMN_COLLECTION_NAME = 'columns';
 const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 
 const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) => {
+    const session = await START_SESSION();
     try {
+        await session.startTransaction();
         // validate the board
         const board = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
@@ -18,23 +20,26 @@ const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) =
             });
         if (!board) throw new Error('Creating New Comlumn Error - Board Not Found');
         // create the column
-        const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(createColumnRequest);
+        const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(createColumnRequest,  { session });
         if (!createdColumnResult) throw new Error('Creating New Column Error - Insert To Database Failed');
-        // update the board
-
         await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .updateOne(
-                { _id: new ObjectId(createColumnRequest.boardId) },
+                { _id: new ObjectId(board._id) },
                 {
                     $push: {
-                        columns: {...createColumnRequest, _id: createdColumnResult.insertedId},
-                        columnOrderIds: createdColumnResult.insertedId.toString(),
+                        columns: {_id: createdColumnResult.insertedId, ...createColumnRequest, },
+                        columnOrderIds:createdColumnResult.insertedId.toString(),
                     },
                 },
+                { session }
             );
+            await session.commitTransaction();
+        session.endSession();
         return createdColumnResult;
     } catch (error) {
+         await session.abortTransaction();
+        session.endSession();
         throw new Error('Create New Column Failed');
     }
 };
@@ -179,7 +184,7 @@ const updateColumnCards = async (
                     { session },
                 );
         } else {
-            const result1 = await GET_DB()
+            const updateStartedColumn = await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)
                 .findOneAndUpdate(
                     { _id: new ObjectId(startColumnId) },
@@ -191,7 +196,7 @@ const updateColumnCards = async (
                     },
                     { session },
                 );
-            const result2 = await GET_DB()
+            const updateEndColumn = await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)
                 .findOneAndUpdate(
                     { _id: new ObjectId(endColumnId) },
@@ -203,7 +208,7 @@ const updateColumnCards = async (
                     },
                     { session },
                 );
-            const result3 = await GET_DB()
+            const updateCard = await GET_DB()
                 .collection(CARD_COLLECTION_NAME)
                 .findOneAndUpdate(
                     { _id: new ObjectId(activeCardId) },
@@ -226,6 +231,37 @@ const updateColumnCards = async (
         await session.endSession();
     }
 };
+
+const duplicateColumn = async (validatedRequest: z.infer<typeof ColumnSchemaZodWithId>) => {
+   try {
+    const { _id, ...adjustedRequest } = validatedRequest;
+    const newColumn: z.infer<typeof ColumnSchemaZod> = {
+        ...adjustedRequest,
+        title: `${adjustedRequest.title} - Copy`,
+        createdAt: new Date().toString(),
+    }
+    if(validatedRequest.cardOrderIds.length === 0 && validatedRequest.cards.length === 0) {
+        const createNewBoardResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumn);
+        const updatedBoardResult = await GET_DB().collection(BOARD_COLLECTION_NAME).updateOne(
+            {
+                _id: new ObjectId(validatedRequest.boardId),
+            },
+            {
+                $push: {
+                    columns: { _id: createNewBoardResult.insertedId, ...newColumn },
+                    columnOrderIds: createNewBoardResult.insertedId.toString(),
+                },
+            }
+        )
+        const board = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(validatedRequest.boardId) })
+        console.log(board)
+
+        return ''
+    }
+   } catch (error) {
+    throw new Error('Duplicate Column Failed');
+   }
+};
 export const columnModel = {
     COLUMN_COLLECTION_NAME,
     createNew,
@@ -233,4 +269,5 @@ export const columnModel = {
     deleteColumnById,
     updateColumnById,
     updateColumnCards,
+    duplicateColumn
 };

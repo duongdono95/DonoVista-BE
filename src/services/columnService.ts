@@ -42,9 +42,19 @@ const updateColumnCards = async (
     }
 };
 
+const duplicateColumn = async(validatedRequest: z.infer<typeof ColumnSchemaZodWithId>) => {
+    try {
+        const result = await columnModel.duplicateColumn(validatedRequest);
+        return result;
+    } catch (error) {
+        throw error
+    }
+}
+
 export const columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
     updateColumnCards,
+    duplicateColumn
 };

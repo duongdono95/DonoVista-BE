@@ -8,5 +8,6 @@ Router.route('/')
     .delete(columnController.deleteColumnById)
     .put(columnController.updateColumnCards);
 Router.route('/:id').put(columnController.updateColumnById);
+Router.route('/duplicate').post(columnController.duplicateColumn)
 
 export const columnRoute = Router;

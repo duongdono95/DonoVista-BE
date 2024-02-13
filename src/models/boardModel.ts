@@ -143,7 +143,6 @@ const getBoardById = async (id: string) => {
             new ObjectId(board[0]._id),
             board[0] as z.infer<typeof BoardSchemaZodWithId>,
         );
-        console.log(board[0].columns);
         return result;
     } catch (error) {
         throw new Error('Delete Board Failed');

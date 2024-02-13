@@ -1,6 +1,6 @@
 import express from 'express';
 import { boardRoute } from './boardRoute';
-import { columnRoute } from "./columnRoute";
+import { columnRoute } from "./ColumnRoute";
 import { cardRoute } from "./cardRoute";
 
 const Router = express.Router();

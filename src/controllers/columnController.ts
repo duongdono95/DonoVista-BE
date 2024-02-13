@@ -80,9 +80,26 @@ const updateColumnCards = async (req: Request, res: Response, next: NextFunction
     }
 };
 
+const duplicateColumn = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const validatedRequest = await ColumnSchemaZodWithId.safeParseAsync(req.body);
+        if(!validatedRequest.success) throw new Error('Validate Duplicate Column Request Failed');
+        const result = await columnService.duplicateColumn(validatedRequest.data);
+        if (!result) throw new Error('Duplicate Column Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Duplicate Column Successfully',
+            data: result,
+        });
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const columnController = {
     createNew,
     deleteColumnById,
     updateColumnById,
     updateColumnCards,
+    duplicateColumn
 };

@@ -87,9 +87,28 @@ const updateColumnCards = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         next(error);
     }
 });
+const duplicateColumn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const validatedRequest = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body);
+        if (!validatedRequest.success)
+            throw new Error('Validate Duplicate Column Request Failed');
+        const result = yield columnService_1.columnService.duplicateColumn(validatedRequest.data);
+        if (!result)
+            throw new Error('Duplicate Column Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Duplicate Column Successfully',
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 exports.columnController = {
     createNew,
     deleteColumnById,
     updateColumnById: exports.updateColumnById,
     updateColumnCards,
+    duplicateColumn
 };

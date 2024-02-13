@@ -12,4 +12,5 @@ Router.route('/')
     .delete(columnController_1.columnController.deleteColumnById)
     .put(columnController_1.columnController.updateColumnCards);
 Router.route('/:id').put(columnController_1.columnController.updateColumnById);
+Router.route('/duplicate').post(columnController_1.columnController.duplicateColumn);
 exports.columnRoute = Router;

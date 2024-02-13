@@ -61,7 +61,6 @@ const getBoardById = async (boardId: string) => {
                 }
             });
         }
-        console.log(result)
         return result;
     } catch (error) {
         throw error;

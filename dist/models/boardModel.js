@@ -139,7 +139,6 @@ const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         ])
             .toArray();
         const result = yield updateOneById(new mongodb_2.ObjectId(board[0]._id), board[0]);
-        console.log(board[0].columns);
         return result;
     }
     catch (error) {
