@@ -77,4 +77,18 @@ exports.BoardSchemaZod = zod_1.z.object({
     updatedAt: zod_1.z.string().nullable().default(null),
     _destroy: zod_1.z.boolean().default(false),
 });
-exports.BoardSchemaZodWithId = exports.BoardSchemaZod.extend({ _id: zod_1.z.string() });
+exports.BoardSchemaZodWithId = zod_1.z.object({
+    _id: zod_1.z.string(),
+    ownerId: zod_1.z.union([zod_1.z.string(), zod_1.z.literal('guestId')]).default('guestId'),
+    title: zod_1.z.string().min(3).max(50).trim(),
+    description: zod_1.z.string().min(3).max(255).trim().optional(),
+    visibilityType: zod_1.z.nativeEnum(VisibilityTypeEnum).default(VisibilityTypeEnum.Private),
+    componentType: zod_1.z.literal(ComponentTypeEnum.Board).default(ComponentTypeEnum.Board),
+    slug: zod_1.z.string().default(''),
+    memberIds: zod_1.z.array(zod_1.z.string()).default([]),
+    columns: zod_1.z.array(exports.ColumnSchemaZodWithId).default([]),
+    columnOrderIds: zod_1.z.array(zod_1.z.string()).default([]),
+    createdAt: zod_1.z.string().default(() => new Date().toString()),
+    updatedAt: zod_1.z.string().nullable().default(null),
+    _destroy: zod_1.z.boolean().default(false),
+});

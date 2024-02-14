@@ -28,7 +28,7 @@ const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, functi
         const createdBoard = yield boardModel_1.boardModel.createNew(newBoard);
         if (!createdBoard)
             throw new Error('Save New Board Failed');
-        return yield boardModel_1.boardModel.findOneById(createdBoard.insertedId);
+        return yield boardModel_1.boardModel.getBoardById(createdBoard.insertedId);
     }
     catch (error) {
         throw error;
@@ -56,21 +56,7 @@ const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function*
 });
 const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield boardModel_1.boardModel.getBoardById(boardId);
-        if (result && result.columns && result.columnOrderIds) {
-            const board = result;
-            board.columns.sort((a, b) => {
-                return board.columnOrderIds.indexOf(a._id.toString()) - board.columnOrderIds.indexOf(b._id.toString());
-            });
-            board.columns.forEach((column) => {
-                if (column.cards && column.cardOrderIds) {
-                    column.cards.sort((a, b) => {
-                        return (column.cardOrderIds.indexOf(a._id.toString()) -
-                            column.cardOrderIds.indexOf(b._id.toString()));
-                    });
-                }
-            });
-        }
+        const result = yield boardModel_1.boardModel.getBoardById(new mongodb_1.ObjectId(boardId));
         return result;
     }
     catch (error) {

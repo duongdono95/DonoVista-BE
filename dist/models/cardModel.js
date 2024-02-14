@@ -69,7 +69,6 @@ const createNew = (createCardRequest) => __awaiter(void 0, void 0, void 0, funct
 });
 const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void 0, function* () {
     const db = (0, mongodb_2.GET_DB)();
-    const session = yield (0, mongodb_2.START_SESSION)();
     let operationResult = { success: false, message: '' };
     try {
         const board = yield db.collection(boardModel_1.BOARD_COLLECTION_NAME).findOne({ _id: new mongodb_1.ObjectId(boardId) });
@@ -78,30 +77,27 @@ const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void
         const column = yield db.collection(columnModel_1.COLUMN_COLLECTION_NAME).findOne({ _id: new mongodb_1.ObjectId(columnId) });
         if (!column)
             throw new Error('Delete Card Failed - Column Not Found');
+        const card = yield db.collection(exports.CARD_COLLECTION_NAME).findOne({ _id: new mongodb_1.ObjectId(cardId) });
+        if (!card)
+            throw new Error('Delete Card Failed - Column Not Found');
         if (!column.cardOrderIds.toString().includes(cardId))
             throw new Error('Delete Card Failed - Card Not Found In Required Column');
-        session.startTransaction();
         const deleteCardResult = yield db.collection(exports.CARD_COLLECTION_NAME).deleteOne({ _id: new mongodb_1.ObjectId(cardId) });
         yield db.collection(columnModel_1.COLUMN_COLLECTION_NAME).updateOne({
             _id: new mongodb_1.ObjectId(columnId),
         }, {
-            $pull: { cardOrderIds: cardId, cards: { _id: cardId } },
-        }, { session });
+            $pull: { cardOrderIds: cardId.toString(), cards: card },
+        });
         if (deleteCardResult.deletedCount === 0)
             throw new Error('Delete Card Failed');
         operationResult = {
             success: true,
             message: 'Card deleted successfully',
         };
-        yield session.commitTransaction();
         return operationResult;
     }
     catch (error) {
-        yield session.abortTransaction();
         throw new Error('Delete Card Failed');
-    }
-    finally {
-        yield session.endSession();
     }
 });
 const updateCard = (cardId, updateCard) => __awaiter(void 0, void 0, void 0, function* () {

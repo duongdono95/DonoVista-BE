@@ -9,37 +9,25 @@ export const COLUMN_COLLECTION_NAME = 'columns';
 const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 
 const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) => {
-    const session = await START_SESSION();
+
     try {
-        await session.startTransaction();
-        // validate the board
-        const board = await GET_DB()
-            .collection(BOARD_COLLECTION_NAME)
-            .findOne({
-                _id: new ObjectId(createColumnRequest.boardId),
-            });
-        if (!board) throw new Error('Creating New Comlumn Error - Board Not Found');
-        // create the column
-        const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(createColumnRequest,  { session });
+        const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(createColumnRequest);
         if (!createdColumnResult) throw new Error('Creating New Column Error - Insert To Database Failed');
-        await GET_DB()
+        const updateBoardResult = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .updateOne(
-                { _id: new ObjectId(board._id) },
+                { _id: new ObjectId(createColumnRequest.boardId)},
                 {
                     $push: {
                         columns: {_id: createdColumnResult.insertedId, ...createColumnRequest, },
                         columnOrderIds:createdColumnResult.insertedId.toString(),
                     },
                 },
-                { session }
+
             );
-            await session.commitTransaction();
-        session.endSession();
-        return createdColumnResult;
+        if (!updateBoardResult.acknowledged) throw new Error('Creating New Column Error - Update Board Failed');
+        return 'Create New Column Successfully';
     } catch (error) {
-         await session.abortTransaction();
-        session.endSession();
         throw new Error('Create New Column Failed');
     }
 };
@@ -82,16 +70,10 @@ const getColumnById = async (id: string) => {
 };
 
 const deleteColumnById = async (columnId: ObjectId, boardId: ObjectId) => {
-    if (!columnId) throw new Error('Delete Column Error - Column Id is required');
     const db = GET_DB();
-    const session = await START_SESSION();
-    let operationResult = { success: false, message: '' };
     try {
-        session.startTransaction();
-
-        const column = await db.collection(COLUMN_COLLECTION_NAME).findOne({ _id: columnId }, { session });
+        const column = await db.collection(COLUMN_COLLECTION_NAME).findOne({ _id: columnId });
         if (!column) throw new Error('Column not found');
-
         if (column.cardOrderIds && column.cardOrderIds.length > 0) {
             await db.collection(CARD_COLLECTION_NAME).deleteMany(
                 {
@@ -99,30 +81,25 @@ const deleteColumnById = async (columnId: ObjectId, boardId: ObjectId) => {
                         $in: column.cardOrderIds.map((id: string) => new ObjectId(id)),
                     },
                 },
-                { session },
             );
         }
 
         const deleteColumnResult = await db
             .collection(COLUMN_COLLECTION_NAME)
-            .deleteOne({ _id: columnId }, { session });
+            .deleteOne({ _id: columnId });
         if (deleteColumnResult.deletedCount === 0) {
             throw new Error('Delete Column Error - Column Not Found');
         }
 
-        await db
+        const updateBoardResult  = await db
             .collection(BOARD_COLLECTION_NAME)
-            .updateOne({ _id: boardId }, { $pull: { columnOrderIds: columnId, columns: columnId } }, { session });
-        operationResult = { success: true, message: 'Column deleted successfully' };
+            .updateOne({ _id: boardId }, { $pull: { columnOrderIds: columnId.toString(), columns: column } });
+        if(!updateBoardResult.acknowledged) throw new Error('Delete Column Error - Update Board Failed');
 
-        await session.commitTransaction();
-
-        return operationResult;
+        return 'Delete Column Successfully';
     } catch (error) {
-        await session.abortTransaction();
+
         throw new Error('Delete Column Failed');
-    } finally {
-        await session.endSession();
     }
 };
 const updateColumnById = async (id: ObjectId, updateColumnRequest: z.infer<typeof ColumnSchemaZod>) => {
@@ -221,7 +198,7 @@ const updateColumnCards = async (
                     { session },
                 );
         }
-        boardModel.getBoardById(endColumn.boardId);
+        // boardModel.getBoardById(new ObjectId(endColumn.boardId));
         await session.commitTransaction();
         return { message: 'Update Column Successfully' };
     } catch (error) {
@@ -235,27 +212,29 @@ const updateColumnCards = async (
 const duplicateColumn = async (validatedRequest: z.infer<typeof ColumnSchemaZodWithId>) => {
    try {
     const { _id, ...adjustedRequest } = validatedRequest;
-    const newColumn: z.infer<typeof ColumnSchemaZod> = {
+    const newColumnData = {
+        _id: new ObjectId(),
         ...adjustedRequest,
         title: `${adjustedRequest.title} - Copy`,
-        createdAt: new Date().toString(),
-    }
+        createdAt: new Date(),
+        updatedAt: null,
+    };
     if(validatedRequest.cardOrderIds.length === 0 && validatedRequest.cards.length === 0) {
-        const createNewBoardResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumn);
-        const updatedBoardResult = await GET_DB().collection(BOARD_COLLECTION_NAME).updateOne(
-            {
-                _id: new ObjectId(validatedRequest.boardId),
-            },
+       const updateBoardResult =  await GET_DB().collection(BOARD_COLLECTION_NAME).updateOne(
+            { _id: new ObjectId(validatedRequest.boardId) },
             {
                 $push: {
-                    columns: { _id: createNewBoardResult.insertedId, ...newColumn },
-                    columnOrderIds: createNewBoardResult.insertedId.toString(),
+                    columnOrderIds: newColumnData._id.toString(),
+                    columns: newColumnData
                 },
-            }
-        )
-        const board = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(validatedRequest.boardId) })
-        console.log(board)
-
+            },
+        );
+        const createNewColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumnData);
+        if (!createNewColumnResult.insertedId) {
+            throw new Error('Failed to create a new column');
+        }
+        const test = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(validatedRequest.boardId) });
+        console.log(test)
         return ''
     }
    } catch (error) {

@@ -42,7 +42,7 @@ const createNew = (board) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Create New Board Failed');
     }
 });
-const findOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).findOne(id);
         return result;
@@ -107,7 +107,8 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Delete Board Failed');
     }
 });
-const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+const aggregateBoardData = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const session = (0, mongodb_1.START_SESSION)();
     try {
         const board = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
@@ -136,18 +137,22 @@ const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                     ],
                 },
             },
-        ])
+        ], { session })
             .toArray();
-        const result = yield updateOneById(new mongodb_2.ObjectId(board[0]._id), board[0]);
-        return result;
+        if (!board[0])
+            throw new Error('Board not found');
+        // =================== update Board to DB ===================
+        const updateBoard = board[0];
+        updateBoard.columnOrderIds = updateBoard.columns.map((column) => column._id.toString());
+        const updateBoardResult = yield updateOneById(new mongodb_2.ObjectId(board[0]._id), updateBoard);
+        return updateBoardResult;
     }
     catch (error) {
-        throw new Error('Delete Board Failed');
+        throw new Error('Get Board Failed');
     }
 });
 exports.boardModel = {
     createNew,
-    findOneById,
     getAllBoards,
     updateOneById,
     deleteOneById,

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { BoardSchemaZod, BoardSchemaZodWithId } from '../zod/generalTypes';
-import { GET_DB } from '../config/mongodb';
+import { BoardSchemaZod, BoardSchemaZodWithId } from '../zod/generalTypes'
+import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
 import { CARD_COLLECTION_NAME, cardModel } from './cardModel';
@@ -37,7 +37,7 @@ const createNew = async (board: z.infer<typeof BoardSchemaZod>) => {
     }
 };
 
-const findOneById = async (id: ObjectId) => {
+const getBoardById = async (id: ObjectId) => {
     try {
         const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne(id);
         return result;
@@ -108,7 +108,8 @@ const deleteOneById = async (id: string) => {
     }
 };
 
-const getBoardById = async (id: string) => {
+const aggregateBoardData = async (id: string) => {
+    const session = START_SESSION();
     try {
         const board = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
@@ -137,20 +138,22 @@ const getBoardById = async (id: string) => {
                         ],
                     },
                 },
-            ])
+            ],{session})
             .toArray();
-        const result = await updateOneById(
-            new ObjectId(board[0]._id),
-            board[0] as z.infer<typeof BoardSchemaZodWithId>,
-        );
-        return result;
+        if(!board[0]) throw new Error('Board not found');
+
+        // =================== update Board to DB ===================
+        const updateBoard = board[0] as z.infer<typeof BoardSchemaZodWithId>;
+        updateBoard.columnOrderIds = updateBoard.columns.map((column) => column._id.toString());
+        const updateBoardResult = await updateOneById(new ObjectId(board[0]._id),updateBoard);
+
+        return updateBoardResult;
     } catch (error) {
-        throw new Error('Delete Board Failed');
+        throw new Error('Get Board Failed');
     }
 };
 export const boardModel = {
     createNew,
-    findOneById,
     getAllBoards,
     updateOneById,
     deleteOneById,

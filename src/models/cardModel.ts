@@ -63,7 +63,6 @@ const createNew = async (createCardRequest: z.infer<typeof CardSchemaZod>) => {
 
 const deleteCard = async (cardId: ObjectId, columnId: ObjectId, boardId: ObjectId) => {
     const db = GET_DB();
-    const session = await START_SESSION();
     let operationResult = { success: false, message: '' };
     try {
         const board = await db.collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(boardId) });
@@ -72,35 +71,29 @@ const deleteCard = async (cardId: ObjectId, columnId: ObjectId, boardId: ObjectI
         const column = await db.collection(COLUMN_COLLECTION_NAME).findOne({ _id: new ObjectId(columnId) });
         if (!column) throw new Error('Delete Card Failed - Column Not Found');
 
+        const card = await db.collection(CARD_COLLECTION_NAME).findOne({ _id: new ObjectId(cardId) });
+        if (!card) throw new Error('Delete Card Failed - Column Not Found');
+
         if (!column.cardOrderIds.toString().includes(cardId))
             throw new Error('Delete Card Failed - Card Not Found In Required Column');
-
-        session.startTransaction();
-
         const deleteCardResult = await db.collection(CARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(cardId) });
         await db.collection(COLUMN_COLLECTION_NAME).updateOne(
             {
                 _id: new ObjectId(columnId),
             },
             {
-                $pull: { cardOrderIds: cardId, cards: { _id: cardId } },
+                $pull: { cardOrderIds: cardId.toString(), cards: card },
             },
-            { session },
         );
-
         if (deleteCardResult.deletedCount === 0) throw new Error('Delete Card Failed');
         operationResult = {
             success: true,
             message: 'Card deleted successfully',
         };
-        await session.commitTransaction();
-
         return operationResult;
     } catch (error) {
-        await session.abortTransaction();
+
         throw new Error('Delete Card Failed');
-    } finally {
-        await session.endSession();
     }
 };
 
