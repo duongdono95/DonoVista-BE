@@ -98,9 +98,7 @@ const deleteColumnById = (columnId, boardId) => __awaiter(void 0, void 0, void 0
                 },
             });
         }
-        const deleteColumnResult = yield db
-            .collection(exports.COLUMN_COLLECTION_NAME)
-            .deleteOne({ _id: columnId });
+        const deleteColumnResult = yield db.collection(exports.COLUMN_COLLECTION_NAME).deleteOne({ _id: columnId });
         if (deleteColumnResult.deletedCount === 0) {
             throw new Error('Delete Column Error - Column Not Found');
         }
@@ -193,24 +191,52 @@ const duplicateColumn = (validatedRequest) => __awaiter(void 0, void 0, void 0, 
     try {
         const { _id } = validatedRequest, adjustedRequest = __rest(validatedRequest, ["_id"]);
         const newColumnData = Object.assign(Object.assign({ _id: new mongodb_2.ObjectId() }, adjustedRequest), { title: `${adjustedRequest.title} - Copy`, createdAt: new Date(), updatedAt: null });
-        if (validatedRequest.cardOrderIds.length === 0 && validatedRequest.cards.length === 0) {
-            const updateBoardResult = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).updateOne({ _id: new mongodb_2.ObjectId(validatedRequest.boardId) }, {
-                $push: {
-                    columnOrderIds: newColumnData._id.toString(),
-                    columns: newColumnData
-                },
-            });
-            const createNewColumnResult = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).insertOne(newColumnData);
-            if (!createNewColumnResult.insertedId) {
-                throw new Error('Failed to create a new column');
-            }
-            const test = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOne({ _id: new mongodb_2.ObjectId(validatedRequest.boardId) });
-            console.log(test);
+        const createdColumnResult = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).insertOne(newColumnData);
+        const board = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOne(new mongodb_2.ObjectId(validatedRequest.boardId));
+        if (!board)
             return '';
-        }
+        const updateBoardResult = yield (0, mongodb_1.GET_DB)()
+            .collection(boardModel_1.BOARD_COLLECTION_NAME)
+            .updateOne({ _id: new mongodb_2.ObjectId(validatedRequest.boardId) }, {
+            $set: Object.assign(Object.assign({}, board), { columns: [...board.columns, newColumnData], columnOrderIds: [...board.columnOrderIds, createdColumnResult.insertedId.toString()] }),
+        });
+        const test = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOne(new mongodb_2.ObjectId(validatedRequest.boardId));
+        console.log(test);
+        console.log(updateBoardResult);
+        return '';
     }
     catch (error) {
         throw new Error('Duplicate Column Failed');
+    }
+});
+const aggregateCards = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const session = (0, mongodb_1.START_SESSION)();
+    try {
+        const column = yield (0, mongodb_1.GET_DB)()
+            .collection(exports.COLUMN_COLLECTION_NAME)
+            .aggregate([
+            {
+                $match: {
+                    _id: new mongodb_2.ObjectId(id),
+                    _destroy: false,
+                },
+            },
+            {
+                $lookup: {
+                    from: cardModel_1.CARD_COLLECTION_NAME,
+                    let: { columnId: { $toString: '$_id' } },
+                    as: 'cards',
+                    pipeline: [{ $match: { $expr: { $eq: ['$columnId', '$$columnId'] } } }],
+                },
+            },
+        ], { session })
+            .toArray();
+        if (!column[0])
+            throw new Error('Column not found');
+        return column[0].cards;
+    }
+    catch (error) {
+        throw new Error('Get Board Failed');
     }
 });
 exports.columnModel = {
@@ -220,5 +246,6 @@ exports.columnModel = {
     deleteColumnById,
     updateColumnById,
     updateColumnCards,
-    duplicateColumn
+    duplicateColumn,
+    aggregateCards,
 };

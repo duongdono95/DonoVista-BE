@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BoardSchemaZod, BoardSchemaZodWithId } from '../zod/generalTypes'
+import { BoardSchemaZod, BoardSchemaZodWithId } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
@@ -40,7 +40,15 @@ const createNew = async (board: z.infer<typeof BoardSchemaZod>) => {
 const getBoardById = async (id: ObjectId) => {
     try {
         const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne(id);
-        return result;
+        if (!result) throw new Error('Board not found');
+        const columns = await aggregateColumns(id);
+        const { _id, ...rest } = result;
+        const newBoardData = {
+            ...rest,
+            columns: columns,
+        };
+        const updateBoard = await updateOneById(result._id, newBoardData as z.infer<typeof BoardSchemaZod>);
+        return updateBoard;
     } catch (error) {
         throw new Error('Find required Board By Id Failed');
     }
@@ -108,46 +116,33 @@ const deleteOneById = async (id: string) => {
     }
 };
 
-const aggregateBoardData = async (id: string) => {
+const aggregateColumns = async (id: ObjectId) => {
     const session = START_SESSION();
     try {
         const board = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
-            .aggregate([
-                {
-                    $match: {
-                        _id: new ObjectId(id),
-                        _destroy: false,
+            .aggregate(
+                [
+                    {
+                        $match: {
+                            _id: new ObjectId(id),
+                            _destroy: false,
+                        },
                     },
-                },
-                {
-                    $lookup: {
-                        from: columnModel.COLUMN_COLLECTION_NAME,
-                        let: { boardId: { $toString: '$_id' } },
-                        as: 'columns',
-                        pipeline: [
-                            { $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } },
-                            {
-                                $lookup: {
-                                    from: cardModel.CARD_COLLECTION_NAME,
-                                    let: { columnId: { $toString: '$_id' } },
-                                    as: 'cards',
-                                    pipeline: [{ $match: { $expr: { $eq: ['$columnId', '$$columnId'] } } }],
-                                },
-                            },
-                        ],
+                    {
+                        $lookup: {
+                            from: columnModel.COLUMN_COLLECTION_NAME,
+                            let: { boardId: { $toString: '$_id' } },
+                            as: 'columns',
+                            pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
+                        },
                     },
-                },
-            ],{session})
+                ],
+                { session },
+            )
             .toArray();
-        if(!board[0]) throw new Error('Board not found');
-
-        // =================== update Board to DB ===================
-        const updateBoard = board[0] as z.infer<typeof BoardSchemaZodWithId>;
-        updateBoard.columnOrderIds = updateBoard.columns.map((column) => column._id.toString());
-        const updateBoardResult = await updateOneById(new ObjectId(board[0]._id),updateBoard);
-
-        return updateBoardResult;
+        if (!board[0]) throw new Error('Board not found');
+        return board[0].columns;
     } catch (error) {
         throw new Error('Get Board Failed');
     }
@@ -158,4 +153,5 @@ export const boardModel = {
     updateOneById,
     deleteOneById,
     getBoardById,
+    aggregateColumns,
 };

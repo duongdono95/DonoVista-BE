@@ -21,50 +21,24 @@ const createNew = (createCardRequest) => __awaiter(void 0, void 0, void 0, funct
     if (!validatedRequest.success) {
         throw new Error('Validate Add New Column To Database Failed');
     }
-    const session = yield (0, mongodb_2.START_SESSION)();
     try {
-        session.startTransaction();
-        // validate the board
-        const board = yield (0, mongodb_2.GET_DB)()
-            .collection(boardModel_1.BOARD_COLLECTION_NAME)
-            .findOne({
-            _id: new mongodb_1.ObjectId(validatedRequest.data.boardId),
-        });
-        if (!board)
-            throw new Error('Creating New Comlumn Error - Board Not Found');
-        // Validate the columnId
-        const column = yield (0, mongodb_2.GET_DB)()
-            .collection(columnModel_1.COLUMN_COLLECTION_NAME)
-            .findOne({ _id: new mongodb_1.ObjectId(validatedRequest.data.columnId) }, { session });
-        if (!column)
-            throw new Error('Creating New Comlumn Error - Column Not Found In Requied Board');
-        if (!board.columnOrderIds.toString().includes(column._id.toString()))
-            throw new Error('Creating New Comlumn Error - Column Not Found In Requied Board');
-        // Create the new CARD
-        const createdCardResult = yield (0, mongodb_2.GET_DB)()
-            .collection(exports.CARD_COLLECTION_NAME)
-            .insertOne(validatedRequest.data, { session });
+        const createdCardResult = yield (0, mongodb_2.GET_DB)().collection(exports.CARD_COLLECTION_NAME).insertOne(validatedRequest.data);
         if (!createdCardResult.acknowledged) {
             throw new Error('Failed to insert new card into database');
         }
         // Update the Column
-        yield (0, mongodb_2.GET_DB)()
+        const updateColumnResult = yield (0, mongodb_2.GET_DB)()
             .collection(columnModel_1.COLUMN_COLLECTION_NAME)
             .updateOne({ _id: new mongodb_1.ObjectId(createCardRequest.columnId) }, {
             $push: {
                 cardOrderIds: createdCardResult.insertedId.toString(),
-                cards: Object.assign(Object.assign({}, validatedRequest.data), { _id: createdCardResult.insertedId }),
+                cards: Object.assign(Object.assign({}, createCardRequest), { _id: createdCardResult.insertedId }),
             },
-        }, { session });
-        yield session.commitTransaction();
-        return createdCardResult;
+        });
+        return 'create New Card Successful';
     }
     catch (error) {
-        yield session.abortTransaction();
         throw new Error('Create New Card Failed');
-    }
-    finally {
-        session.endSession();
     }
 });
 const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void 0, function* () {
