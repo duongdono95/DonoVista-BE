@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BoardSchemaZod, BoardSchemaZodWithId } from '../zod/generalTypes';
+import { BoardSchemaZodWithId } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
@@ -18,19 +18,9 @@ const getAllBoards = async () => {
     }
 };
 
-const createNew = async (board: z.infer<typeof BoardSchemaZod>) => {
-    const validatedBoard = BoardSchemaZod.safeParse(board);
+const createNew = async (board: Omit<z.infer<typeof BoardSchemaZodWithId>, '_id'>) => {
     try {
-        if (!validatedBoard.success) {
-            throw new Error(
-                JSON.stringify({
-                    message: 'Validate Creating New Board Failed',
-                    error: validatedBoard.error.errors,
-                }),
-            );
-        }
-
-        const createdBoard = await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(validatedBoard.data);
+        const createdBoard = await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(board);
         return createdBoard;
     } catch (error) {
         throw new Error('Create New Board Failed');
@@ -41,18 +31,17 @@ const getBoardById = async (id: ObjectId) => {
     try {
         const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne(id);
         if (!result) throw new Error('Board not found');
-
         return result;
     } catch (error) {
         throw new Error('Find required Board By Id Failed');
     }
 };
 
-const updateOneById = async (id: ObjectId, updatedData: z.infer<typeof BoardSchemaZod>) => {
+const updateOneById = async (id: ObjectId, updatedData: z.infer<typeof BoardSchemaZodWithId>) => {
     try {
         Object.keys(updatedData).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
-                delete updatedData[key as keyof z.infer<typeof BoardSchemaZod>];
+                delete updatedData[key as keyof z.infer<typeof BoardSchemaZodWithId>];
             }
         });
 
@@ -112,40 +101,35 @@ const deleteOneById = async (id: string) => {
 };
 
 const updateAggregateColumns = async (id: ObjectId) => {
-    const session = START_SESSION();
     try {
         const boardColumns = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
-            .aggregate(
-                [
-                    {
-                        $match: {
-                            _id: new ObjectId(id),
-                            _destroy: false,
-                        },
+            .aggregate([
+                {
+                    $match: {
+                        _id: new ObjectId(id),
+                        _destroy: false,
                     },
-                    {
-                        $lookup: {
-                            from: columnModel.COLUMN_COLLECTION_NAME,
-                            let: { boardId: { $toString: '$_id' } },
-                            as: 'columns',
-                            pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
-                        },
+                },
+                {
+                    $lookup: {
+                        from: columnModel.COLUMN_COLLECTION_NAME,
+                        let: { boardId: { $toString: '$_id' } },
+                        pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
+                        as: 'columns',
                     },
-                ],
-                { session },
-            )
+                },
+            ])
             .toArray();
         if (!boardColumns[0]) throw new Error('Board not found');
+        const updateBoardResult = await GET_DB()
+            .collection(BOARD_COLLECTION_NAME)
+            .updateOne({ _id: new ObjectId(id) }, { $set: { columns: boardColumns[0].columns } });
 
-        const updateBoardResult = await GET_DB().collection(BOARD_COLLECTION_NAME).updateOne(
-            { _id: new ObjectId(id) },
-            {$set: {columns: boardColumns[0].columns}}
-        )
         if (updateBoardResult.modifiedCount === 0) throw new Error('Update Board Failed');
         return {
             code: 200,
-            message: 'Update Board Columns Success'
+            message: 'Update Board Columns Success',
         };
     } catch (error) {
         throw new Error('Get Board Failed');

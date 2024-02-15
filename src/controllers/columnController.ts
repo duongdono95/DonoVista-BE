@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { CardSchemaZod, CardSchemaZodWithID, ColumnSchemaZod, ColumnSchemaZodWithId } from '../zod/generalTypes';
+import { CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { columnService } from '../services/columnService';
 
 const createNew = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const validateRequest = await ColumnSchemaZod.safeParseAsync(req.body);
+        const validateRequest = await ColumnSchemaZodWithId.omit({ _id: true }).safeParseAsync(req.body);
         if (!validateRequest.success) {
             throw new Error('Validate Create New Column Request Failed');
         }
@@ -34,8 +34,7 @@ const deleteColumnById = async (req: Request, res: Response, next: NextFunction)
 
 export const updateColumnById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const validateRequest = await ColumnSchemaZod.safeParseAsync(req.body);
-
+        const validateRequest = await ColumnSchemaZodWithId.safeParseAsync(req.body);
         if (!validateRequest.success) throw new Error('Validate Update Column Request Failed');
         const result = await columnService.updateColumnById(req.params.id, validateRequest.data);
         if (!result) throw new Error('Update Column Failed');
@@ -83,7 +82,7 @@ const arrangeCards = async (req: Request, res: Response, next: NextFunction) => 
 const duplicateColumn = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const validatedRequest = await ColumnSchemaZodWithId.safeParseAsync(req.body);
-        if(!validatedRequest.success) throw new Error('Validate Duplicate Column Request Failed');
+        if (!validatedRequest.success) throw new Error('Validate Duplicate Column Request Failed');
         const result = await columnService.duplicateColumn(validatedRequest.data);
         if (!result) throw new Error('Duplicate Column Failed');
         res.status(200).json({
@@ -92,14 +91,14 @@ const duplicateColumn = async (req: Request, res: Response, next: NextFunction) 
             data: result,
         });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 export const columnController = {
     createNew,
     deleteColumnById,
     updateColumnById,
     arrangeCards,
-    duplicateColumn
+    duplicateColumn,
 };

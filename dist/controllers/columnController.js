@@ -14,7 +14,7 @@ const generalTypes_1 = require("../zod/generalTypes");
 const columnService_1 = require("../services/columnService");
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validateRequest = yield generalTypes_1.ColumnSchemaZod.safeParseAsync(req.body);
+        const validateRequest = yield generalTypes_1.ColumnSchemaZodWithId.omit({ _id: true }).safeParseAsync(req.body);
         if (!validateRequest.success) {
             throw new Error('Validate Create New Column Request Failed');
         }
@@ -44,7 +44,7 @@ const deleteColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
 });
 const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validateRequest = yield generalTypes_1.ColumnSchemaZod.safeParseAsync(req.body);
+        const validateRequest = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body);
         if (!validateRequest.success)
             throw new Error('Validate Update Column Request Failed');
         const result = yield columnService_1.columnService.updateColumnById(req.params.id, validateRequest.data);
@@ -110,5 +110,5 @@ exports.columnController = {
     deleteColumnById,
     updateColumnById: exports.updateColumnById,
     arrangeCards,
-    duplicateColumn
+    duplicateColumn,
 };

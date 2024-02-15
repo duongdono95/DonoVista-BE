@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.boardModel = exports.BOARD_COLLECTION_NAME = void 0;
-const generalTypes_1 = require("../zod/generalTypes");
 const mongodb_1 = require("../config/mongodb");
 const mongodb_2 = require("mongodb");
 const columnModel_1 = require("./columnModel");
@@ -27,15 +26,8 @@ const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const createNew = (board) => __awaiter(void 0, void 0, void 0, function* () {
-    const validatedBoard = generalTypes_1.BoardSchemaZod.safeParse(board);
     try {
-        if (!validatedBoard.success) {
-            throw new Error(JSON.stringify({
-                message: 'Validate Creating New Board Failed',
-                error: validatedBoard.error.errors,
-            }));
-        }
-        const createdBoard = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).insertOne(validatedBoard.data);
+        const createdBoard = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).insertOne(board);
         return createdBoard;
     }
     catch (error) {
@@ -110,7 +102,6 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const updateAggregateColumns = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const session = (0, mongodb_1.START_SESSION)();
     try {
         const boardColumns = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
@@ -125,20 +116,22 @@ const updateAggregateColumns = (id) => __awaiter(void 0, void 0, void 0, functio
                 $lookup: {
                     from: columnModel_1.columnModel.COLUMN_COLLECTION_NAME,
                     let: { boardId: { $toString: '$_id' } },
-                    as: 'columns',
                     pipeline: [{ $match: { $expr: { $eq: ['$boardId', '$$boardId'] } } }],
+                    as: 'columns',
                 },
             },
-        ], { session })
+        ])
             .toArray();
         if (!boardColumns[0])
             throw new Error('Board not found');
-        const updateBoardResult = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).updateOne({ _id: new mongodb_2.ObjectId(id) }, { $set: { columns: boardColumns[0].columns } });
+        const updateBoardResult = yield (0, mongodb_1.GET_DB)()
+            .collection(exports.BOARD_COLLECTION_NAME)
+            .updateOne({ _id: new mongodb_2.ObjectId(id) }, { $set: { columns: boardColumns[0].columns } });
         if (updateBoardResult.modifiedCount === 0)
             throw new Error('Update Board Failed');
         return {
             code: 200,
-            message: 'Update Board Columns Success'
+            message: 'Update Board Columns Success',
         };
     }
     catch (error) {

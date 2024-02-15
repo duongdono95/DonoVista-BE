@@ -1,9 +1,9 @@
 import { ObjectId } from 'mongodb';
 import { columnModel } from '../models/columnModel';
-import { CardSchemaZodWithID, ColumnSchemaZod, ColumnSchemaZodWithId } from '../zod/generalTypes';
+import { CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { z } from 'zod';
 
-const createNew = async (validatedRequest: z.infer<typeof ColumnSchemaZod>) => {
+const createNew = async (validatedRequest: Omit<z.infer<typeof ColumnSchemaZodWithId>, '_id'>) => {
     try {
         const result = await columnModel.createNew(validatedRequest);
         return result;
@@ -20,7 +20,7 @@ const deleteColumnById = async (columnId: string, boardId: string) => {
     }
 };
 
-const updateColumnById = async (id: string, validatedRequest: z.infer<typeof ColumnSchemaZod>) => {
+const updateColumnById = async (id: string, validatedRequest: z.infer<typeof ColumnSchemaZodWithId>) => {
     try {
         const result = await columnModel.updateColumnById(new ObjectId(id), validatedRequest);
         return result;
@@ -42,19 +42,19 @@ const arrangeCards = async (
     }
 };
 
-const duplicateColumn = async(validatedRequest: z.infer<typeof ColumnSchemaZodWithId>) => {
+const duplicateColumn = async (validatedRequest: z.infer<typeof ColumnSchemaZodWithId>) => {
     try {
         const result = await columnModel.duplicateColumn(validatedRequest);
         return result;
     } catch (error) {
-        throw error
+        throw error;
     }
-}
+};
 
 export const columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
     arrangeCards,
-    duplicateColumn
+    duplicateColumn,
 };

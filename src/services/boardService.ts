@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BoardSchemaZod } from '../zod/generalTypes';
+import { BoardSchemaZodWithId } from '../zod/generalTypes';
 import { slugify } from '../utils/formatter';
 import { boardModel } from '../models/boardModel';
 import { ObjectId } from 'mongodb';
@@ -13,7 +13,7 @@ const getAllBoards = async () => {
     }
 };
 
-const createNew = async (validatedRequest: z.infer<typeof BoardSchemaZod>) => {
+const createNew = async (validatedRequest: Omit<z.infer<typeof BoardSchemaZodWithId>, '_id'>) => {
     try {
         const newBoard = { ...validatedRequest, slug: slugify(validatedRequest.title) };
         const createdBoard = await boardModel.createNew(newBoard);
@@ -24,7 +24,7 @@ const createNew = async (validatedRequest: z.infer<typeof BoardSchemaZod>) => {
     }
 };
 
-const updateBoardById = async (boardId: string, validatedRequest: z.infer<typeof BoardSchemaZod>) => {
+const updateBoardById = async (boardId: string, validatedRequest: z.infer<typeof BoardSchemaZodWithId>) => {
     try {
         const result = await boardModel.updateOneById(new ObjectId(boardId), validatedRequest);
         return result;

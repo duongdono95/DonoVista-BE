@@ -12,26 +12,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cardModel = exports.CARD_COLLECTION_NAME = void 0;
 const mongodb_1 = require("mongodb");
 const mongodb_2 = require("../config/mongodb");
-const generalTypes_1 = require("../zod/generalTypes");
 const boardModel_1 = require("./boardModel");
 const columnModel_1 = require("./columnModel");
 exports.CARD_COLLECTION_NAME = 'cards';
+const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 const createNew = (createCardRequest) => __awaiter(void 0, void 0, void 0, function* () {
-    const validatedRequest = generalTypes_1.CardSchemaZod.safeParse(createCardRequest);
-    if (!validatedRequest.success)
-        throw new Error('Validate Add New Column To Database Failed');
     try {
-        const createdCardResult = yield (0, mongodb_2.GET_DB)().collection(exports.CARD_COLLECTION_NAME).insertOne(validatedRequest.data);
+        const createdCardResult = yield (0, mongodb_2.GET_DB)().collection(exports.CARD_COLLECTION_NAME).insertOne(createCardRequest);
         if (!createdCardResult.acknowledged) {
             throw new Error('Failed to insert new card into database');
         }
-        const updateColumnCardOrderIds = yield (0, mongodb_2.GET_DB)().collection(columnModel_1.COLUMN_COLLECTION_NAME).updateOne({ _id: new mongodb_1.ObjectId(createCardRequest.columnId) }, {
-            $push: { cardOrderIds: createdCardResult.insertedId.toString() },
+        const updateColumnCardOrderIds = yield (0, mongodb_2.GET_DB)()
+            .collection(columnModel_1.COLUMN_COLLECTION_NAME)
+            .updateOne({ _id: new mongodb_1.ObjectId(createCardRequest.columnId) }, {
+            $push: {
+                cardOrderIds: createdCardResult.insertedId.toString(),
+                cards: Object.assign({ _id: createdCardResult.insertedId }, createCardRequest),
+            },
         });
-        const updateColumnResult = yield columnModel_1.columnModel.updateAggregateCards(new mongodb_1.ObjectId(createCardRequest.columnId));
         const updateBoardResult = yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_1.ObjectId(createCardRequest.boardId));
-        console.log(updateColumnResult);
-        if (updateColumnResult.code !== 200 || updateBoardResult.code !== 200 || updateColumnCardOrderIds.modifiedCount === 0)
+        if (updateBoardResult.code !== 200 || updateColumnCardOrderIds.modifiedCount === 0)
             throw new Error('Create New Card Failed');
         return 'create New Card Successful';
     }
@@ -60,6 +60,11 @@ const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void
 });
 const updateCard = (cardId, updateCard) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        Object.keys(updateCard).forEach((key) => {
+            if (INVALID_UPDATED_FIELDS.includes(key)) {
+                delete updateCard[key];
+            }
+        });
         const updateCardResult = yield (0, mongodb_2.GET_DB)()
             .collection(exports.CARD_COLLECTION_NAME)
             .findOneAndUpdate({ _id: new mongodb_1.ObjectId(cardId) }, {

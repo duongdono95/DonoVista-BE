@@ -62,5 +62,5 @@ exports.columnService = {
     deleteColumnById,
     updateColumnById,
     arrangeCards,
-    duplicateColumn
+    duplicateColumn,
 };
