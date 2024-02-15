@@ -49,7 +49,7 @@ export const updateColumnById = async (req: Request, res: Response, next: NextFu
     }
 };
 
-const updateColumnCards = async (req: Request, res: Response, next: NextFunction) => {
+const arrangeCards = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body) throw new Error('Update Card In Bulk Request missing required fields');
         const validatedRequest = {
@@ -64,7 +64,7 @@ const updateColumnCards = async (req: Request, res: Response, next: NextFunction
         )
             throw new Error('Validate Update Card In Bulk Request Failed');
 
-        const result = await columnService.updateColumnCards(
+        const result = await columnService.arrangeCards(
             validatedRequest.startColumn.data,
             validatedRequest.endColumn.data,
             validatedRequest.activeCard.data,
@@ -100,6 +100,6 @@ export const columnController = {
     createNew,
     deleteColumnById,
     updateColumnById,
-    updateColumnCards,
+    arrangeCards,
     duplicateColumn
 };

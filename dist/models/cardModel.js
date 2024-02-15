@@ -18,23 +18,21 @@ const columnModel_1 = require("./columnModel");
 exports.CARD_COLLECTION_NAME = 'cards';
 const createNew = (createCardRequest) => __awaiter(void 0, void 0, void 0, function* () {
     const validatedRequest = generalTypes_1.CardSchemaZod.safeParse(createCardRequest);
-    if (!validatedRequest.success) {
+    if (!validatedRequest.success)
         throw new Error('Validate Add New Column To Database Failed');
-    }
     try {
         const createdCardResult = yield (0, mongodb_2.GET_DB)().collection(exports.CARD_COLLECTION_NAME).insertOne(validatedRequest.data);
         if (!createdCardResult.acknowledged) {
             throw new Error('Failed to insert new card into database');
         }
-        // Update the Column
-        const updateColumnResult = yield (0, mongodb_2.GET_DB)()
-            .collection(columnModel_1.COLUMN_COLLECTION_NAME)
-            .updateOne({ _id: new mongodb_1.ObjectId(createCardRequest.columnId) }, {
-            $push: {
-                cardOrderIds: createdCardResult.insertedId.toString(),
-                cards: Object.assign(Object.assign({}, createCardRequest), { _id: createdCardResult.insertedId }),
-            },
+        const updateColumnCardOrderIds = yield (0, mongodb_2.GET_DB)().collection(columnModel_1.COLUMN_COLLECTION_NAME).updateOne({ _id: new mongodb_1.ObjectId(createCardRequest.columnId) }, {
+            $push: { cardOrderIds: createdCardResult.insertedId.toString() },
         });
+        const updateColumnResult = yield columnModel_1.columnModel.updateAggregateCards(new mongodb_1.ObjectId(createCardRequest.columnId));
+        const updateBoardResult = yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_1.ObjectId(createCardRequest.boardId));
+        console.log(updateColumnResult);
+        if (updateColumnResult.code !== 200 || updateBoardResult.code !== 200 || updateColumnCardOrderIds.modifiedCount === 0)
+            throw new Error('Create New Card Failed');
         return 'create New Card Successful';
     }
     catch (error) {
@@ -43,32 +41,18 @@ const createNew = (createCardRequest) => __awaiter(void 0, void 0, void 0, funct
 });
 const deleteCard = (cardId, columnId, boardId) => __awaiter(void 0, void 0, void 0, function* () {
     const db = (0, mongodb_2.GET_DB)();
-    let operationResult = { success: false, message: '' };
     try {
-        const board = yield db.collection(boardModel_1.BOARD_COLLECTION_NAME).findOne({ _id: new mongodb_1.ObjectId(boardId) });
-        if (!board)
-            throw new Error('Delete Card Failed - Board Not Found');
-        const column = yield db.collection(columnModel_1.COLUMN_COLLECTION_NAME).findOne({ _id: new mongodb_1.ObjectId(columnId) });
-        if (!column)
-            throw new Error('Delete Card Failed - Column Not Found');
-        const card = yield db.collection(exports.CARD_COLLECTION_NAME).findOne({ _id: new mongodb_1.ObjectId(cardId) });
-        if (!card)
-            throw new Error('Delete Card Failed - Column Not Found');
-        if (!column.cardOrderIds.toString().includes(cardId))
-            throw new Error('Delete Card Failed - Card Not Found In Required Column');
         const deleteCardResult = yield db.collection(exports.CARD_COLLECTION_NAME).deleteOne({ _id: new mongodb_1.ObjectId(cardId) });
-        yield db.collection(columnModel_1.COLUMN_COLLECTION_NAME).updateOne({
-            _id: new mongodb_1.ObjectId(columnId),
-        }, {
-            $pull: { cardOrderIds: cardId.toString(), cards: card },
-        });
         if (deleteCardResult.deletedCount === 0)
             throw new Error('Delete Card Failed');
-        operationResult = {
-            success: true,
-            message: 'Card deleted successfully',
-        };
-        return operationResult;
+        const updateColumnCardOrderIds = yield db.collection(columnModel_1.COLUMN_COLLECTION_NAME).updateOne({ _id: new mongodb_1.ObjectId(columnId) }, {
+            $pull: { cardOrderIds: new mongodb_1.ObjectId(cardId) },
+        });
+        const arrangeCards = yield columnModel_1.columnModel.updateAggregateCards(columnId);
+        const updateBoardResult = yield boardModel_1.boardModel.updateAggregateColumns(boardId);
+        if (arrangeCards.code !== 200 || updateBoardResult.code !== 200 || updateColumnCardOrderIds.modifiedCount === 0)
+            throw new Error('Delete Card Failed');
+        return 'Remove Card Successful';
     }
     catch (error) {
         throw new Error('Delete Card Failed');
@@ -81,7 +65,10 @@ const updateCard = (cardId, updateCard) => __awaiter(void 0, void 0, void 0, fun
             .findOneAndUpdate({ _id: new mongodb_1.ObjectId(cardId) }, {
             $set: Object.assign(Object.assign({}, updateCard), { updatedAt: new Date().toString() }),
         }, { returnDocument: 'after' });
-        columnModel_1.columnModel.getColumnById(updateCard.columnId);
+        const updateColumnResult = yield columnModel_1.columnModel.updateAggregateCards(new mongodb_1.ObjectId(updateCard.columnId));
+        const updateBoardResult = yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_1.ObjectId(updateCard.boardId));
+        if (updateColumnResult.code !== 200 || updateBoardResult.code !== 200)
+            throw new Error('Delete Card Failed');
         return updateCardResult;
     }
     catch (error) {

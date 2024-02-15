@@ -37,42 +37,6 @@ const createNew = async (createColumnRequest: z.infer<typeof ColumnSchemaZod>) =
     }
 };
 
-const getColumnById = async (id: string) => {
-    try {
-        const column = await GET_DB()
-            .collection(COLUMN_COLLECTION_NAME)
-            .aggregate([
-                {
-                    $match: {
-                        _id: new ObjectId(id),
-                        _destroy: false,
-                    },
-                },
-                {
-                    $lookup: {
-                        from: CARD_COLLECTION_NAME,
-                        let: { columnId: { $toString: '$_id' } },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $and: [{ $eq: ['$columnId', '$$columnId'] }, { $eq: ['$_destroy', false] }],
-                                    },
-                                },
-                            },
-                        ],
-                        as: 'cards',
-                    },
-                },
-            ])
-            .toArray();
-        const newColumn = column[0];
-        updateColumnById(new ObjectId(newColumn._id), newColumn as z.infer<typeof ColumnSchemaZod>);
-        return newColumn;
-    } catch (error) {
-        throw new Error('Get Column By Id Failed');
-    }
-};
 
 const deleteColumnById = async (columnId: ObjectId, boardId: ObjectId) => {
     const db = GET_DB();
@@ -91,12 +55,17 @@ const deleteColumnById = async (columnId: ObjectId, boardId: ObjectId) => {
         if (deleteColumnResult.deletedCount === 0) {
             throw new Error('Delete Column Error - Column Not Found');
         }
-
-        const updateBoardResult = await db
-            .collection(BOARD_COLLECTION_NAME)
-            .updateOne({ _id: boardId }, { $pull: { columnOrderIds: columnId.toString(), columns: column } });
-        if (!updateBoardResult.acknowledged) throw new Error('Delete Column Error - Update Board Failed');
-
+        const updateBoardColumnsOrderIds = await GET_DB().collection(BOARD_COLLECTION_NAME).updateOne(
+            { _id: boardId },
+            {
+                $pull: {
+                    columnOrderIds: columnId.toString(),
+                }
+            }
+        )
+        if(updateBoardColumnsOrderIds.modifiedCount === 0) throw new Error('Delete Column failed - Update Board Failed');
+        const updateBoardColumns = await boardModel.updateAggregateColumns(new ObjectId(boardId))
+        if(updateBoardColumns.code !== 200) throw new Error('Delete Column failed - Update Board Failed');
         return 'Delete Column Successfully';
     } catch (error) {
         throw new Error('Delete Column Failed');
@@ -110,28 +79,27 @@ const updateColumnById = async (id: ObjectId, updateColumnRequest: z.infer<typeo
             }
         });
         const columnUpdateResult = await GET_DB()
-            .collection(COLUMN_COLLECTION_NAME)
-            .findOneAndUpdate(
-                { _id: new ObjectId(id) },
-                { $set: { ...updateColumnRequest, updatedAt: new Date().toString() } },
-                { returnDocument: 'after' },
+        .collection(COLUMN_COLLECTION_NAME)
+        .findOneAndUpdate(
+            { _id: new ObjectId(id) },
+            { $set: { ...updateColumnRequest, updatedAt: new Date().toString() } },
+            { returnDocument: 'after' },
             );
-        if (!columnUpdateResult) throw new Error('Update Column Failed');
+        const updateBoardResult = await boardModel.updateAggregateColumns(new ObjectId(updateColumnRequest.boardId));
+        if (!columnUpdateResult || updateBoardResult.code !== 200) throw new Error('Update Column Failed');
 
         return columnUpdateResult;
     } catch (error) {}
 };
-const updateColumnCards = async (
+const arrangeCards = async (
     startColumn: z.infer<typeof ColumnSchemaZodWithId>,
     endColumn: z.infer<typeof ColumnSchemaZodWithId>,
     activeCard: z.infer<typeof CardSchemaZodWithID>,
 ) => {
-    const session = await START_SESSION();
     const startColumnId = startColumn._id;
     const endColumnId = endColumn._id;
     const activeCardId = activeCard._id;
     try {
-        session.startTransaction();
         Object.keys(startColumn).forEach((key) => {
             if (INVALID_UPDATED_FIELDS.includes(key)) {
                 delete startColumn[key as keyof z.infer<typeof ColumnSchemaZod>];
@@ -150,62 +118,61 @@ const updateColumnCards = async (
         if (startColumnId === endColumnId) {
             const test = await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)
-                .findOneAndUpdate(
-                    { _id: new ObjectId(startColumnId) },
-                    {
-                        $set: {
-                            ...startColumn,
-                            updatedAt: new Date().toString(),
-                        },
-                    },
-                    { session },
-                );
-        } else {
-            const updateStartedColumn = await GET_DB()
-                .collection(COLUMN_COLLECTION_NAME)
-                .findOneAndUpdate(
-                    { _id: new ObjectId(startColumnId) },
-                    {
-                        $set: {
-                            ...startColumn,
-                            updatedAt: new Date().toString(),
-                        },
-                    },
-                    { session },
-                );
-            const updateEndColumn = await GET_DB()
-                .collection(COLUMN_COLLECTION_NAME)
-                .findOneAndUpdate(
+                .updateOne(
                     { _id: new ObjectId(endColumnId) },
                     {
                         $set: {
-                            ...endColumn,
+                            cards: endColumn.cards,
+                            cardOrderIds: endColumn.cardOrderIds,
                             updatedAt: new Date().toString(),
                         },
                     },
-                    { session },
-                );
-            const updateCard = await GET_DB()
-                .collection(CARD_COLLECTION_NAME)
-                .findOneAndUpdate(
-                    { _id: new ObjectId(activeCardId) },
-                    {
-                        $set: {
-                            ...activeCard,
-                            updatedAt: new Date().toString(),
-                        },
-                    },
-                    { session },
+
                 );
         }
-        // boardModel.getBoardById(new ObjectId(endColumn.boardId));
-        await session.commitTransaction();
+        // else {
+        //     const updateStartedColumn = await GET_DB()
+        //         .collection(COLUMN_COLLECTION_NAME)
+        //         .findOneAndUpdate(
+        //             { _id: new ObjectId(startColumnId) },
+        //             {
+        //                 $set: {
+        //                     ...startColumn,
+        //                     updatedAt: new Date().toString(),
+        //                 },
+        //             },
+
+        //         );
+        //     const updateEndColumn = await GET_DB()
+        //         .collection(COLUMN_COLLECTION_NAME)
+        //         .findOneAndUpdate(
+        //             { _id: new ObjectId(endColumnId) },
+        //             {
+        //                 $set: {
+        //                     ...endColumn,
+        //                     updatedAt: new Date().toString(),
+        //                 },
+        //             },
+
+        //         );
+        //     const updateCard = await GET_DB()
+        //         .collection(CARD_COLLECTION_NAME)
+        //         .findOneAndUpdate(
+        //             { _id: new ObjectId(activeCardId) },
+        //             {
+        //                 $set: {
+        //                     ...activeCard,
+        //                     updatedAt: new Date().toString(),
+        //                 },
+        //             },
+
+        //         );
+        // }
+        const updateBoardResult = await boardModel.updateAggregateColumns(new ObjectId(startColumn.boardId));
+        if(updateBoardResult.code !== 200) throw new Error('Update Column Failed')
         return { message: 'Update Column Successfully' };
     } catch (error) {
-        await session.abortTransaction();
         throw error;
-    } finally {
-        await session.endSession();
     }
 };
 
@@ -236,18 +203,15 @@ const duplicateColumn = async (validatedRequest: z.infer<typeof ColumnSchemaZodW
             );
 
         const test = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne(new ObjectId(validatedRequest.boardId));
-        console.log(test);
-        console.log(updateBoardResult);
         return '';
     } catch (error) {
         throw new Error('Duplicate Column Failed');
     }
 };
 
-const aggregateCards = async (id: ObjectId) => {
-    const session = START_SESSION();
+const updateAggregateCards = async (id: ObjectId) => {
     try {
-        const column = await GET_DB()
+        const cards = await GET_DB()
             .collection(COLUMN_COLLECTION_NAME)
             .aggregate(
                 [
@@ -266,11 +230,20 @@ const aggregateCards = async (id: ObjectId) => {
                         },
                     },
                 ],
-                { session },
             )
             .toArray();
-        if (!column[0]) throw new Error('Column not found');
-        return column[0].cards;
+        if (!cards[0]) throw new Error('Column not found');
+
+        const updateColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { cards: cards[0].cards } },
+        )
+        if(updateColumnResult.modifiedCount === 0) throw new Error('Update Column Failed');
+
+        return {
+            code: 200,
+            message: 'Update Column Cards Success'
+        };
     } catch (error) {
         throw new Error('Get Board Failed');
     }
@@ -278,10 +251,9 @@ const aggregateCards = async (id: ObjectId) => {
 export const columnModel = {
     COLUMN_COLLECTION_NAME,
     createNew,
-    getColumnById,
     deleteColumnById,
     updateColumnById,
-    updateColumnCards,
+    arrangeCards,
     duplicateColumn,
-    aggregateCards,
+    updateAggregateCards,
 };

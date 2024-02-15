@@ -8,17 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.boardModel = exports.BOARD_COLLECTION_NAME = void 0;
 const generalTypes_1 = require("../zod/generalTypes");
@@ -58,11 +47,7 @@ const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         const result = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).findOne(id);
         if (!result)
             throw new Error('Board not found');
-        const columns = yield aggregateColumns(id);
-        const { _id } = result, rest = __rest(result, ["_id"]);
-        const newBoardData = Object.assign(Object.assign({}, rest), { columns: columns });
-        const updateBoard = yield updateOneById(result._id, newBoardData);
-        return updateBoard;
+        return result;
     }
     catch (error) {
         throw new Error('Find required Board By Id Failed');
@@ -124,10 +109,10 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Delete Board Failed');
     }
 });
-const aggregateColumns = (id) => __awaiter(void 0, void 0, void 0, function* () {
+const updateAggregateColumns = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const session = (0, mongodb_1.START_SESSION)();
     try {
-        const board = yield (0, mongodb_1.GET_DB)()
+        const boardColumns = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
             .aggregate([
             {
@@ -146,9 +131,15 @@ const aggregateColumns = (id) => __awaiter(void 0, void 0, void 0, function* () 
             },
         ], { session })
             .toArray();
-        if (!board[0])
+        if (!boardColumns[0])
             throw new Error('Board not found');
-        return board[0].columns;
+        const updateBoardResult = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).updateOne({ _id: new mongodb_2.ObjectId(id) }, { $set: { columns: boardColumns[0].columns } });
+        if (updateBoardResult.modifiedCount === 0)
+            throw new Error('Update Board Failed');
+        return {
+            code: 200,
+            message: 'Update Board Columns Success'
+        };
     }
     catch (error) {
         throw new Error('Get Board Failed');
@@ -160,5 +151,5 @@ exports.boardModel = {
     updateOneById,
     deleteOneById,
     getBoardById,
-    aggregateColumns,
+    updateAggregateColumns,
 };

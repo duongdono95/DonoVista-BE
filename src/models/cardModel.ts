@@ -9,26 +9,25 @@ export const CARD_COLLECTION_NAME = 'cards';
 
 const createNew = async (createCardRequest: z.infer<typeof CardSchemaZod>) => {
     const validatedRequest = CardSchemaZod.safeParse(createCardRequest);
-    if (!validatedRequest.success) {
-        throw new Error('Validate Add New Column To Database Failed');
-    }
+    if (!validatedRequest.success) throw new Error('Validate Add New Column To Database Failed');
     try {
         const createdCardResult = await GET_DB().collection(CARD_COLLECTION_NAME).insertOne(validatedRequest.data);
         if (!createdCardResult.acknowledged) {
             throw new Error('Failed to insert new card into database');
         }
-        // Update the Column
-        const updateColumnResult = await GET_DB()
-            .collection(COLUMN_COLLECTION_NAME)
-            .updateOne(
-                { _id: new ObjectId(createCardRequest.columnId) },
-                {
-                    $push: {
-                        cardOrderIds: createdCardResult.insertedId.toString(),
-                        cards: { ...createCardRequest, _id: createdCardResult.insertedId },
-                    },
-                },
-            );
+
+        const updateColumnCardOrderIds = await GET_DB().collection(COLUMN_COLLECTION_NAME).updateOne(
+            { _id: new ObjectId(createCardRequest.columnId) },
+            {
+                $push: { cardOrderIds: createdCardResult.insertedId.toString()},
+            }
+        )
+
+        const updateColumnResult = await columnModel.updateAggregateCards(new ObjectId(createCardRequest.columnId));
+        const updateBoardResult = await boardModel.updateAggregateColumns(new ObjectId(createCardRequest.boardId));
+        console.log(updateColumnResult)
+        if(updateColumnResult.code !== 200 || updateBoardResult.code !== 200 || updateColumnCardOrderIds.modifiedCount === 0) throw new Error('Create New Card Failed');
+
         return 'create New Card Successful';
     } catch (error) {
         throw new Error('Create New Card Failed');
@@ -37,34 +36,23 @@ const createNew = async (createCardRequest: z.infer<typeof CardSchemaZod>) => {
 
 const deleteCard = async (cardId: ObjectId, columnId: ObjectId, boardId: ObjectId) => {
     const db = GET_DB();
-    let operationResult = { success: false, message: '' };
     try {
-        const board = await db.collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(boardId) });
-        if (!board) throw new Error('Delete Card Failed - Board Not Found');
-
-        const column = await db.collection(COLUMN_COLLECTION_NAME).findOne({ _id: new ObjectId(columnId) });
-        if (!column) throw new Error('Delete Card Failed - Column Not Found');
-
-        const card = await db.collection(CARD_COLLECTION_NAME).findOne({ _id: new ObjectId(cardId) });
-        if (!card) throw new Error('Delete Card Failed - Column Not Found');
-
-        if (!column.cardOrderIds.toString().includes(cardId))
-            throw new Error('Delete Card Failed - Card Not Found In Required Column');
         const deleteCardResult = await db.collection(CARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(cardId) });
-        await db.collection(COLUMN_COLLECTION_NAME).updateOne(
-            {
-                _id: new ObjectId(columnId),
-            },
-            {
-                $pull: { cardOrderIds: cardId.toString(), cards: card },
-            },
-        );
         if (deleteCardResult.deletedCount === 0) throw new Error('Delete Card Failed');
-        operationResult = {
-            success: true,
-            message: 'Card deleted successfully',
-        };
-        return operationResult;
+
+        const updateColumnCardOrderIds = await db.collection(COLUMN_COLLECTION_NAME).updateOne(
+            { _id: new ObjectId(columnId) },
+            {
+                $pull: { cardOrderIds: new ObjectId(cardId) },
+            }
+        )
+
+        const arrangeCards = await columnModel.updateAggregateCards(columnId);
+        const updateBoardResult = await boardModel.updateAggregateColumns(boardId);
+        if(arrangeCards.code !== 200 || updateBoardResult.code !== 200 || updateColumnCardOrderIds.modifiedCount === 0) throw new Error('Delete Card Failed');
+
+
+        return 'Remove Card Successful';
     } catch (error) {
         throw new Error('Delete Card Failed');
     }
@@ -84,7 +72,9 @@ const updateCard = async (cardId: ObjectId, updateCard: z.infer<typeof CardSchem
                 },
                 { returnDocument: 'after' },
             );
-        columnModel.getColumnById(updateCard.columnId);
+            const updateColumnResult = await columnModel.updateAggregateCards(new ObjectId(updateCard.columnId));
+            const updateBoardResult = await boardModel.updateAggregateColumns(new ObjectId(updateCard.boardId));
+            if(updateColumnResult.code !== 200 || updateBoardResult.code !== 200) throw new Error('Delete Card Failed');
         return updateCardResult;
     } catch (error) {
         throw error;

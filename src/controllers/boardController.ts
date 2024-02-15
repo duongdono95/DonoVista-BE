@@ -29,6 +29,7 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
             });
         }
         const createdBoard = await boardService.createNew(validatedBoard.data);
+
         res.status(200).json({
             code: 200,
             message: 'Created New Board Successfully',

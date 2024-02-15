@@ -29,13 +29,13 @@ const updateColumnById = async (id: string, validatedRequest: z.infer<typeof Col
     }
 };
 
-const updateColumnCards = async (
+const arrangeCards = async (
     startColumn: z.infer<typeof ColumnSchemaZodWithId>,
     endColumn: z.infer<typeof ColumnSchemaZodWithId>,
     activeCard: z.infer<typeof CardSchemaZodWithID>,
 ) => {
     try {
-        const result = await columnModel.updateColumnCards(startColumn, endColumn, activeCard);
+        const result = await columnModel.arrangeCards(startColumn, endColumn, activeCard);
         return result;
     } catch (error) {
         throw error;
@@ -55,6 +55,6 @@ export const columnService = {
     createNew,
     deleteColumnById,
     updateColumnById,
-    updateColumnCards,
+    arrangeCards,
     duplicateColumn
 };

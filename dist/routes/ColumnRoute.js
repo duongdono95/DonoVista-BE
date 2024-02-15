@@ -10,7 +10,7 @@ const Router = express_1.default.Router();
 Router.route('/')
     .post(columnController_1.columnController.createNew)
     .delete(columnController_1.columnController.deleteColumnById)
-    .put(columnController_1.columnController.updateColumnCards);
+    .put(columnController_1.columnController.arrangeCards);
 Router.route('/:id').put(columnController_1.columnController.updateColumnById);
 Router.route('/duplicate').post(columnController_1.columnController.duplicateColumn);
 exports.columnRoute = Router;

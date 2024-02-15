@@ -6,7 +6,7 @@ const Router = express.Router();
 Router.route('/')
     .post(columnController.createNew)
     .delete(columnController.deleteColumnById)
-    .put(columnController.updateColumnCards);
+    .put(columnController.arrangeCards);
 Router.route('/:id').put(columnController.updateColumnById);
 Router.route('/duplicate').post(columnController.duplicateColumn)
 

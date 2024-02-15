@@ -41,14 +41,8 @@ const getBoardById = async (id: ObjectId) => {
     try {
         const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne(id);
         if (!result) throw new Error('Board not found');
-        const columns = await aggregateColumns(id);
-        const { _id, ...rest } = result;
-        const newBoardData = {
-            ...rest,
-            columns: columns,
-        };
-        const updateBoard = await updateOneById(result._id, newBoardData as z.infer<typeof BoardSchemaZod>);
-        return updateBoard;
+
+        return result;
     } catch (error) {
         throw new Error('Find required Board By Id Failed');
     }
@@ -61,6 +55,7 @@ const updateOneById = async (id: ObjectId, updatedData: z.infer<typeof BoardSche
                 delete updatedData[key as keyof z.infer<typeof BoardSchemaZod>];
             }
         });
+
         const result = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .findOneAndUpdate(
@@ -116,10 +111,10 @@ const deleteOneById = async (id: string) => {
     }
 };
 
-const aggregateColumns = async (id: ObjectId) => {
+const updateAggregateColumns = async (id: ObjectId) => {
     const session = START_SESSION();
     try {
-        const board = await GET_DB()
+        const boardColumns = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .aggregate(
                 [
@@ -141,8 +136,17 @@ const aggregateColumns = async (id: ObjectId) => {
                 { session },
             )
             .toArray();
-        if (!board[0]) throw new Error('Board not found');
-        return board[0].columns;
+        if (!boardColumns[0]) throw new Error('Board not found');
+
+        const updateBoardResult = await GET_DB().collection(BOARD_COLLECTION_NAME).updateOne(
+            { _id: new ObjectId(id) },
+            {$set: {columns: boardColumns[0].columns}}
+        )
+        if (updateBoardResult.modifiedCount === 0) throw new Error('Update Board Failed');
+        return {
+            code: 200,
+            message: 'Update Board Columns Success'
+        };
     } catch (error) {
         throw new Error('Get Board Failed');
     }
@@ -153,5 +157,5 @@ export const boardModel = {
     updateOneById,
     deleteOneById,
     getBoardById,
-    aggregateColumns,
+    updateAggregateColumns,
 };

@@ -61,7 +61,7 @@ const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.updateColumnById = updateColumnById;
-const updateColumnCards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const arrangeCards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!req.body)
             throw new Error('Update Card In Bulk Request missing required fields');
@@ -74,7 +74,7 @@ const updateColumnCards = (req, res, next) => __awaiter(void 0, void 0, void 0, 
             !validatedRequest.endColumn.success ||
             !validatedRequest.activeCard.success)
             throw new Error('Validate Update Card In Bulk Request Failed');
-        const result = yield columnService_1.columnService.updateColumnCards(validatedRequest.startColumn.data, validatedRequest.endColumn.data, validatedRequest.activeCard.data);
+        const result = yield columnService_1.columnService.arrangeCards(validatedRequest.startColumn.data, validatedRequest.endColumn.data, validatedRequest.activeCard.data);
         if (!result)
             throw new Error('Update Card In Bulk Failed');
         res.status(200).json({
@@ -109,6 +109,6 @@ exports.columnController = {
     createNew,
     deleteColumnById,
     updateColumnById: exports.updateColumnById,
-    updateColumnCards,
+    arrangeCards,
     duplicateColumn
 };
