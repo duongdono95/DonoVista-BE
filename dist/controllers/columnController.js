@@ -89,10 +89,11 @@ const arrangeCards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
 });
 const duplicateColumn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validatedRequest = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body);
-        if (!validatedRequest.success)
+        const validatedColumn = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.column);
+        const validatedBoard = yield generalTypes_1.BoardSchemaZodWithId.safeParseAsync(req.body.board);
+        if (!validatedColumn.success || !validatedBoard.success)
             throw new Error('Validate Duplicate Column Request Failed');
-        const result = yield columnService_1.columnService.duplicateColumn(validatedRequest.data);
+        const result = yield columnService_1.columnService.duplicateColumn(validatedColumn.data, validatedBoard.data);
         if (!result)
             throw new Error('Duplicate Column Failed');
         res.status(200).json({

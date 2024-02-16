@@ -101,14 +101,14 @@ const deleteOneById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Delete Board Failed');
     }
 });
-const updateAggregateColumns = (id) => __awaiter(void 0, void 0, void 0, function* () {
+const updateAggregateColumns = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const boardColumns = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
             .aggregate([
             {
                 $match: {
-                    _id: new mongodb_2.ObjectId(id),
+                    _id: new mongodb_2.ObjectId(boardId),
                     _destroy: false,
                 },
             },
@@ -126,7 +126,7 @@ const updateAggregateColumns = (id) => __awaiter(void 0, void 0, void 0, functio
             throw new Error('Board not found');
         const updateBoardResult = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
-            .updateOne({ _id: new mongodb_2.ObjectId(id) }, { $set: { columns: boardColumns[0].columns } });
+            .updateOne({ _id: new mongodb_2.ObjectId(boardId) }, { $set: { columns: boardColumns[0].columns } });
         if (updateBoardResult.modifiedCount === 0)
             throw new Error('Update Board Failed');
         return {

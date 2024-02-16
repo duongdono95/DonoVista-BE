@@ -100,14 +100,14 @@ const deleteOneById = async (id: string) => {
     }
 };
 
-const updateAggregateColumns = async (id: ObjectId) => {
+const updateAggregateColumns = async (boardId: ObjectId) => {
     try {
         const boardColumns = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .aggregate([
                 {
                     $match: {
-                        _id: new ObjectId(id),
+                        _id: new ObjectId(boardId),
                         _destroy: false,
                     },
                 },
@@ -124,7 +124,7 @@ const updateAggregateColumns = async (id: ObjectId) => {
         if (!boardColumns[0]) throw new Error('Board not found');
         const updateBoardResult = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
-            .updateOne({ _id: new ObjectId(id) }, { $set: { columns: boardColumns[0].columns } });
+            .updateOne({ _id: new ObjectId(boardId) }, { $set: { columns: boardColumns[0].columns } });
 
         if (updateBoardResult.modifiedCount === 0) throw new Error('Update Board Failed');
         return {

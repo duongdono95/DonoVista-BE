@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { columnModel } from '../models/columnModel';
-import { CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
+import { BoardSchemaZodWithId, CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { z } from 'zod';
 
 const createNew = async (validatedRequest: Omit<z.infer<typeof ColumnSchemaZodWithId>, '_id'>) => {
@@ -42,9 +42,9 @@ const arrangeCards = async (
     }
 };
 
-const duplicateColumn = async (validatedRequest: z.infer<typeof ColumnSchemaZodWithId>) => {
+const duplicateColumn = async (validatedColumn: z.infer<typeof ColumnSchemaZodWithId>, validatedBoard: z.infer<typeof BoardSchemaZodWithId>) => {
     try {
-        const result = await columnModel.duplicateColumn(validatedRequest);
+        const result = await columnModel.duplicateColumn(validatedColumn, validatedBoard);
         return result;
     } catch (error) {
         throw error;

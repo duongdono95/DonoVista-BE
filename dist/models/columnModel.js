@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.columnModel = exports.COLUMN_COLLECTION_NAME = void 0;
 const mongodb_1 = require("../config/mongodb");
@@ -119,25 +130,22 @@ const arrangeCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, v
             const test = yield (0, mongodb_1.GET_DB)()
                 .collection(exports.COLUMN_COLLECTION_NAME)
                 .updateOne({ _id: new mongodb_2.ObjectId(endColumnId) }, {
-                $set: {
-                    cards: endColumn.cards,
-                    cardOrderIds: endColumn.cardOrderIds,
-                    updatedAt: new Date().toString(),
-                },
+                $set: Object.assign(Object.assign({}, endColumn), { updatedAt: new Date().toString() }),
             });
             const updateCard = yield (0, mongodb_1.GET_DB)()
                 .collection(cardModel_1.CARD_COLLECTION_NAME)
-                .findOneAndUpdate({ _id: new mongodb_2.ObjectId(activeCardId) }, {
+                .updateOne({ _id: new mongodb_2.ObjectId(activeCardId) }, {
                 $set: Object.assign(Object.assign({}, activeCard), { updatedAt: new Date().toString() }),
             });
         }
         const updateStartedColumn = yield (0, mongodb_1.GET_DB)()
             .collection(exports.COLUMN_COLLECTION_NAME)
-            .findOneAndUpdate({ _id: new mongodb_2.ObjectId(startColumnId) }, {
+            .updateOne({ _id: new mongodb_2.ObjectId(startColumnId) }, {
             $set: Object.assign(Object.assign({}, startColumn), { updatedAt: new Date().toString() }),
         });
+        const updateColumnResult = yield updateAggregateCards(new mongodb_2.ObjectId(endColumnId));
         const updateBoardResult = yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_2.ObjectId(startColumn.boardId));
-        if (updateBoardResult.code !== 200)
+        if (updateBoardResult.code !== 200 || updateColumnResult.code !== 200)
             throw new Error('Update Column Failed');
         return { message: 'Update Column Successfully' };
     }
@@ -145,32 +153,27 @@ const arrangeCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, v
         throw error;
     }
 });
-const duplicateColumn = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
+const duplicateColumn = (validatedColumn, validatedBoard) => __awaiter(void 0, void 0, void 0, function* () {
+    const { _id } = validatedColumn, restColumn = __rest(validatedColumn, ["_id"]);
+    const newColumn = Object.assign(Object.assign({}, restColumn), { title: `${restColumn.title} - Copy`, createdAt: new Date().toString() });
     try {
-        // const { _id, ...adjustedRequest } = validatedRequest;
-        // const newColumnData = {
-        //     _id: new ObjectId(),
-        //     ...adjustedRequest,
-        //     title: `${adjustedRequest.title} - Copy`,
-        //     createdAt: new Date(),
-        //     updatedAt: null,
-        // };
-        // const createdColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumnData);
-        // const board = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne(new ObjectId(validatedRequest.boardId));
-        // if (!board) return '';
-        // const updateBoardResult = await GET_DB()
-        //     .collection(BOARD_COLLECTION_NAME)
-        //     .updateOne(
-        //         { _id: new ObjectId(validatedRequest.boardId) },
-        //         {
-        //             $set: {
-        //                 ...board,
-        //                 columns: [...board.columns, newColumnData],
-        //                 columnOrderIds: [...board.columnOrderIds, createdColumnResult.insertedId.toString()],
-        //             },
-        //         },
-        //     );
-        return '';
+        const createNewColumnResult = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).insertOne(newColumn);
+        const board = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOne({ _id: new mongodb_2.ObjectId(validatedBoard._id) });
+        if (!board)
+            throw new Error('Board not found');
+        const updateBoard = Object.assign(Object.assign({}, board), { columns: [...board.columns, Object.assign({ _id: createNewColumnResult.insertedId }, newColumn)], columnOrderIds: [...board.columnOrderIds, createNewColumnResult.insertedId.toString()], updateAt: new Date().toString() });
+        console.log(board);
+        console.log('====================================');
+        console.log(validatedBoard);
+        const updateBoardResult = yield (0, mongodb_1.GET_DB)().collection(boardModel_1.BOARD_COLLECTION_NAME).findOneAndUpdate({
+            _id: new mongodb_2.ObjectId(newColumn.boardId),
+        }, {
+            $set: updateBoard
+        }, { returnDocument: 'after' });
+        console.log('====================================');
+        console.log(updateBoardResult);
+        console.log('====================================');
+        return 'Duplicate Column Success';
     }
     catch (error) {
         throw new Error('Duplicate Column Failed');

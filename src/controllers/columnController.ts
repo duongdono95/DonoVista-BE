@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
+import { BoardSchemaZodWithId, CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { columnService } from '../services/columnService';
 
 const createNew = async (req: Request, res: Response, next: NextFunction) => {
@@ -81,9 +81,11 @@ const arrangeCards = async (req: Request, res: Response, next: NextFunction) => 
 
 const duplicateColumn = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const validatedRequest = await ColumnSchemaZodWithId.safeParseAsync(req.body);
-        if (!validatedRequest.success) throw new Error('Validate Duplicate Column Request Failed');
-        const result = await columnService.duplicateColumn(validatedRequest.data);
+        const validatedColumn = await ColumnSchemaZodWithId.safeParseAsync(req.body.column);
+        const validatedBoard = await BoardSchemaZodWithId.safeParseAsync(req.body.board);
+        if (!validatedColumn.success || !validatedBoard.success) throw new Error('Validate Duplicate Column Request Failed');
+
+        const result = await columnService.duplicateColumn(validatedColumn.data, validatedBoard.data);
         if (!result) throw new Error('Duplicate Column Failed');
         res.status(200).json({
             code: 200,

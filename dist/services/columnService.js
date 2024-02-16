@@ -48,9 +48,9 @@ const arrangeCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, v
         throw error;
     }
 });
-const duplicateColumn = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
+const duplicateColumn = (validatedColumn, validatedBoard) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield columnModel_1.columnModel.duplicateColumn(validatedRequest);
+        const result = yield columnModel_1.columnModel.duplicateColumn(validatedColumn, validatedBoard);
         return result;
     }
     catch (error) {
