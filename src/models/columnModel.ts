@@ -1,4 +1,10 @@
-import { BoardSchemaZodWithId, CardSchemaZodWithID, ColumnSchemaZodWithId, ComponentTypeEnum, VisibilityTypeEnum } from '../zod/generalTypes';
+import {
+    BoardSchemaZodWithId,
+    CardSchemaZodWithID,
+    ColumnSchemaZodWithId,
+    ComponentTypeEnum,
+    VisibilityTypeEnum,
+} from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
@@ -162,40 +168,55 @@ const arrangeCards = async (
     }
 };
 
-const duplicateColumn = async (validatedColumn: z.infer<typeof ColumnSchemaZodWithId>, validatedBoard: z.infer<typeof BoardSchemaZodWithId>) => {
-    const {_id, ...restColumn} = validatedColumn
-    const newColumn = {
-        ...restColumn,
-        title: `${restColumn.title} - Copy`,
-        createdAt: new Date().toString(),
-    }
+const duplicateColumn = async (
+    validatedColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    validatedBoard: z.infer<typeof BoardSchemaZodWithId>,
+) => {
+    const { _id: columnId, cards, ...restColumn } = validatedColumn;
+    let duplicatedCards = [];
+    let newCardOrderIds = [];
     try {
-        const createNewColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumn);
-        const board = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(validatedBoard._id) });
-        if(!board) throw new Error('Board not found');
-        const updateBoard = {
-            ...board,
-            columns: [...board.columns, { _id: createNewColumnResult.insertedId, ...newColumn }],
-            columnOrderIds: [...board.columnOrderIds, createNewColumnResult.insertedId.toString()],
-            updateAt: new Date().toString(),
+        const newColumnId = new ObjectId();
+        if (validatedColumn.cards.length > 0) {
+            for (const card of cards) {
+                const { _id, ...rest } = card;
+                const newCard = {
+                    ...rest,
+                    columnId: new ObjectId(newColumnId).toString(),
+                    _id: new ObjectId(),
+                };
+
+                const addNewCardResult = await GET_DB().collection('cards').insertOne(newCard);
+                if (!addNewCardResult.insertedId) throw new Error('Duplicate Column Failed');
+                duplicatedCards.push(newCard);
+                newCardOrderIds.push(newCard._id.toString());
+            }
         }
+        const newColumnWithId = {
+            ...restColumn,
+            cards: duplicatedCards,
+            cardOrderIds: newCardOrderIds,
+            title: `${restColumn.title} - Copy`,
+            createdAt: new Date().toString(),
+            _id: new ObjectId(newColumnId),
+        };
+        const createNewColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumnWithId);
+        if (!createNewColumnResult.insertedId) throw new Error('Duplicate Column Failed');
 
-        console.log(board)
-        console.log('====================================')
-        console.log(validatedBoard)
+        const updateBoardResult = await GET_DB()
+            .collection(BOARD_COLLECTION_NAME)
+            .updateOne(
+                { _id: new ObjectId(validatedColumn.boardId) },
+                {
+                    $push: {
+                        columns: newColumnWithId as any,
+                        columnOrderIds: newColumnWithId._id.toString() as any,
+                    },
 
-        const updateBoardResult = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
-            {
-                _id: new ObjectId(newColumn.boardId),
-            },
-            {
-                $set: updateBoard
-            },
-            { returnDocument: 'after'}
-        )
-        console.log('====================================')
-        console.log(updateBoardResult)
-        console.log('====================================')
+                    $set: { updatedAt: new Date().toISOString() },
+                },
+            );
+        if (updateBoardResult.modifiedCount === 0) throw new Error('Duplicate Column Failed');
         return 'Duplicate Column Success';
     } catch (error) {
         throw new Error('Duplicate Column Failed');
