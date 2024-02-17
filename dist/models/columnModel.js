@@ -153,13 +153,13 @@ const arrangeCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, v
         throw error;
     }
 });
-const duplicateColumn = (validatedColumn, validatedBoard) => __awaiter(void 0, void 0, void 0, function* () {
-    const { _id: columnId, cards } = validatedColumn, restColumn = __rest(validatedColumn, ["_id", "cards"]);
+const duplicateColumn = (validatedNewColumn, validatedOriginalColumn, validatedActiveCard) => __awaiter(void 0, void 0, void 0, function* () {
+    const { _id: columnId, cards } = validatedNewColumn, restColumn = __rest(validatedNewColumn, ["_id", "cards"]);
     let duplicatedCards = [];
     let newCardOrderIds = [];
     try {
         const newColumnId = new mongodb_2.ObjectId();
-        if (validatedColumn.cards.length > 0) {
+        if (validatedNewColumn.cards.length > 0 && !validatedOriginalColumn && !validatedActiveCard) {
             for (const card of cards) {
                 const { _id } = card, rest = __rest(card, ["_id"]);
                 const newCard = Object.assign(Object.assign({}, rest), { columnId: new mongodb_2.ObjectId(newColumnId).toString(), _id: new mongodb_2.ObjectId() });
@@ -170,13 +170,38 @@ const duplicateColumn = (validatedColumn, validatedBoard) => __awaiter(void 0, v
                 newCardOrderIds.push(newCard._id.toString());
             }
         }
-        const newColumnWithId = Object.assign(Object.assign({}, restColumn), { cards: duplicatedCards, cardOrderIds: newCardOrderIds, title: `${restColumn.title} - Copy`, createdAt: new Date().toString(), _id: new mongodb_2.ObjectId(newColumnId) });
+        if (validatedActiveCard && validatedOriginalColumn) {
+            const originalColumnCards = validatedOriginalColumn.cards.filter((card) => card._id !== validatedActiveCard._id);
+            const updateOriginalColumnResult = yield (0, mongodb_1.GET_DB)()
+                .collection(exports.COLUMN_COLLECTION_NAME)
+                .updateOne({ _id: new mongodb_2.ObjectId(validatedOriginalColumn._id) }, {
+                $set: {
+                    cards: originalColumnCards,
+                    cardOrderIds: originalColumnCards.map((card) => card._id.toString()),
+                    updatedAt: new Date().toISOString(),
+                },
+            });
+            const updateActiveCardResult = yield (0, mongodb_1.GET_DB)()
+                .collection(exports.COLUMN_COLLECTION_NAME)
+                .updateOne({ _id: new mongodb_2.ObjectId(validatedActiveCard._id) }, {
+                $set: {
+                    columnId: newColumnId.toString(),
+                    updatedAt: new Date().toISOString(),
+                },
+            });
+            if (updateOriginalColumnResult.modifiedCount === 0)
+                throw new Error('Duplicate Column Failed');
+            yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_2.ObjectId(validatedOriginalColumn.boardId));
+            duplicatedCards.push(Object.assign(Object.assign({}, validatedActiveCard), { columnId: newColumnId.toString() }));
+            newCardOrderIds.push(validatedActiveCard._id.toString());
+        }
+        const newColumnWithId = Object.assign(Object.assign({}, restColumn), { cards: duplicatedCards, cardOrderIds: newCardOrderIds, title: validatedActiveCard ? 'New Column' : `${restColumn.title}`, createdAt: new Date().toString(), _id: new mongodb_2.ObjectId(newColumnId) });
         const createNewColumnResult = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).insertOne(newColumnWithId);
         if (!createNewColumnResult.insertedId)
             throw new Error('Duplicate Column Failed');
         const updateBoardResult = yield (0, mongodb_1.GET_DB)()
             .collection(boardModel_1.BOARD_COLLECTION_NAME)
-            .updateOne({ _id: new mongodb_2.ObjectId(validatedColumn.boardId) }, {
+            .updateOne({ _id: new mongodb_2.ObjectId(validatedNewColumn.boardId) }, {
             $push: {
                 columns: newColumnWithId,
                 columnOrderIds: newColumnWithId._id.toString(),
@@ -185,7 +210,7 @@ const duplicateColumn = (validatedColumn, validatedBoard) => __awaiter(void 0, v
         });
         if (updateBoardResult.modifiedCount === 0)
             throw new Error('Duplicate Column Failed');
-        return 'Duplicate Column Success';
+        return newColumnWithId;
     }
     catch (error) {
         throw new Error('Duplicate Column Failed');

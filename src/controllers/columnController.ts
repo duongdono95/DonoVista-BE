@@ -82,10 +82,33 @@ const arrangeCards = async (req: Request, res: Response, next: NextFunction) => 
 const duplicateColumn = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const validatedColumn = await ColumnSchemaZodWithId.safeParseAsync(req.body.column);
-        const validatedBoard = await BoardSchemaZodWithId.safeParseAsync(req.body.board);
-        if (!validatedColumn.success || !validatedBoard.success) throw new Error('Validate Duplicate Column Request Failed');
+        if (!validatedColumn.success) throw new Error('Validate Duplicate Column Request Failed');
 
-        const result = await columnService.duplicateColumn(validatedColumn.data, validatedBoard.data);
+        const result = await columnService.duplicateColumn(validatedColumn.data);
+        if (!result) throw new Error('Duplicate Column Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Duplicate Column Successfully',
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const duplicateCard = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const validatedOriginalColumn = await ColumnSchemaZodWithId.safeParseAsync(req.body.originalColumn);
+        const validatedNewColumn = await ColumnSchemaZodWithId.safeParseAsync(req.body.newColumn);
+        const validatedActiveCard = await CardSchemaZodWithID.safeParseAsync(req.body.activeCard);
+        if (!validatedOriginalColumn.success || !validatedNewColumn.success || !validatedActiveCard.success)
+            throw new Error('Validate Duplicate Column Request Failed');
+
+        const result = await columnService.duplicateCard(
+            validatedOriginalColumn.data,
+            validatedNewColumn.data,
+            validatedActiveCard.data,
+        );
         if (!result) throw new Error('Duplicate Column Failed');
         res.status(200).json({
             code: 200,
@@ -103,4 +126,5 @@ export const columnController = {
     updateColumnById,
     arrangeCards,
     duplicateColumn,
+    duplicateCard,
 };

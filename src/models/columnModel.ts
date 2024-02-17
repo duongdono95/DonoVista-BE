@@ -169,15 +169,16 @@ const arrangeCards = async (
 };
 
 const duplicateColumn = async (
-    validatedColumn: z.infer<typeof ColumnSchemaZodWithId>,
-    validatedBoard: z.infer<typeof BoardSchemaZodWithId>,
+    validatedNewColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    validatedOriginalColumn?: z.infer<typeof ColumnSchemaZodWithId>,
+    validatedActiveCard?: z.infer<typeof CardSchemaZodWithID>,
 ) => {
-    const { _id: columnId, cards, ...restColumn } = validatedColumn;
+    const { _id: columnId, cards, ...restColumn } = validatedNewColumn;
     let duplicatedCards = [];
     let newCardOrderIds = [];
     try {
         const newColumnId = new ObjectId();
-        if (validatedColumn.cards.length > 0) {
+        if (validatedNewColumn.cards.length > 0 && !validatedOriginalColumn && !validatedActiveCard) {
             for (const card of cards) {
                 const { _id, ...rest } = card;
                 const newCard = {
@@ -192,11 +193,43 @@ const duplicateColumn = async (
                 newCardOrderIds.push(newCard._id.toString());
             }
         }
+        if (validatedActiveCard && validatedOriginalColumn) {
+            const originalColumnCards = validatedOriginalColumn.cards.filter(
+                (card) => card._id !== validatedActiveCard._id,
+            );
+            const updateOriginalColumnResult = await GET_DB()
+                .collection(COLUMN_COLLECTION_NAME)
+                .updateOne(
+                    { _id: new ObjectId(validatedOriginalColumn._id) },
+                    {
+                        $set: {
+                            cards: originalColumnCards,
+                            cardOrderIds: originalColumnCards.map((card) => card._id.toString()),
+                            updatedAt: new Date().toISOString(),
+                        },
+                    },
+                );
+            const updateActiveCardResult = await GET_DB()
+                .collection(COLUMN_COLLECTION_NAME)
+                .updateOne(
+                    { _id: new ObjectId(validatedActiveCard._id) },
+                    {
+                        $set: {
+                            columnId: newColumnId.toString(),
+                            updatedAt: new Date().toISOString(),
+                        },
+                    },
+                );
+            if (updateOriginalColumnResult.modifiedCount === 0) throw new Error('Duplicate Column Failed');
+            await boardModel.updateAggregateColumns(new ObjectId(validatedOriginalColumn.boardId));
+            duplicatedCards.push({ ...validatedActiveCard, columnId: newColumnId.toString() });
+            newCardOrderIds.push(validatedActiveCard._id.toString());
+        }
         const newColumnWithId = {
             ...restColumn,
             cards: duplicatedCards,
             cardOrderIds: newCardOrderIds,
-            title: `${restColumn.title} - Copy`,
+            title: validatedActiveCard ? 'New Column' : `${restColumn.title}`,
             createdAt: new Date().toString(),
             _id: new ObjectId(newColumnId),
         };
@@ -206,7 +239,7 @@ const duplicateColumn = async (
         const updateBoardResult = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
             .updateOne(
-                { _id: new ObjectId(validatedColumn.boardId) },
+                { _id: new ObjectId(validatedNewColumn.boardId) },
                 {
                     $push: {
                         columns: newColumnWithId as any,
@@ -217,7 +250,7 @@ const duplicateColumn = async (
                 },
             );
         if (updateBoardResult.modifiedCount === 0) throw new Error('Duplicate Column Failed');
-        return 'Duplicate Column Success';
+        return newColumnWithId;
     } catch (error) {
         throw new Error('Duplicate Column Failed');
     }
@@ -259,6 +292,7 @@ const updateAggregateCards = async (id: ObjectId) => {
         throw new Error('Get Board Failed');
     }
 };
+
 export const columnModel = {
     COLUMN_COLLECTION_NAME,
     createNew,

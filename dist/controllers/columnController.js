@@ -90,10 +90,29 @@ const arrangeCards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
 const duplicateColumn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const validatedColumn = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.column);
-        const validatedBoard = yield generalTypes_1.BoardSchemaZodWithId.safeParseAsync(req.body.board);
-        if (!validatedColumn.success || !validatedBoard.success)
+        if (!validatedColumn.success)
             throw new Error('Validate Duplicate Column Request Failed');
-        const result = yield columnService_1.columnService.duplicateColumn(validatedColumn.data, validatedBoard.data);
+        const result = yield columnService_1.columnService.duplicateColumn(validatedColumn.data);
+        if (!result)
+            throw new Error('Duplicate Column Failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Duplicate Column Successfully',
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const duplicateCard = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const validatedOriginalColumn = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.originalColumn);
+        const validatedNewColumn = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.newColumn);
+        const validatedActiveCard = yield generalTypes_1.CardSchemaZodWithID.safeParseAsync(req.body.activeCard);
+        if (!validatedOriginalColumn.success || !validatedNewColumn.success || !validatedActiveCard.success)
+            throw new Error('Validate Duplicate Column Request Failed');
+        const result = yield columnService_1.columnService.duplicateCard(validatedOriginalColumn.data, validatedNewColumn.data, validatedActiveCard.data);
         if (!result)
             throw new Error('Duplicate Column Failed');
         res.status(200).json({
@@ -112,4 +131,5 @@ exports.columnController = {
     updateColumnById: exports.updateColumnById,
     arrangeCards,
     duplicateColumn,
+    duplicateCard,
 };

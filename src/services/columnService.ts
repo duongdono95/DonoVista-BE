@@ -42,9 +42,26 @@ const arrangeCards = async (
     }
 };
 
-const duplicateColumn = async (validatedColumn: z.infer<typeof ColumnSchemaZodWithId>, validatedBoard: z.infer<typeof BoardSchemaZodWithId>) => {
+const duplicateColumn = async (validatedColumn: z.infer<typeof ColumnSchemaZodWithId>) => {
     try {
-        const result = await columnModel.duplicateColumn(validatedColumn, validatedBoard);
+        const result = await columnModel.duplicateColumn(validatedColumn);
+        return result;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const duplicateCard = async (
+    validatedOriginalColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    validatedNewColumn: z.infer<typeof ColumnSchemaZodWithId>,
+    validatedActiveCard: z.infer<typeof CardSchemaZodWithID>,
+) => {
+    try {
+        const result = await columnModel.duplicateColumn(
+            validatedNewColumn,
+            validatedOriginalColumn,
+            validatedActiveCard,
+        );
         return result;
     } catch (error) {
         throw error;
@@ -57,4 +74,5 @@ export const columnService = {
     updateColumnById,
     arrangeCards,
     duplicateColumn,
+    duplicateCard,
 };

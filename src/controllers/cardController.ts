@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { CardSchemaZodWithID } from '../zod/generalTypes';
+import { CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { columnService } from '../services/columnService';
 import { cardService } from '../services/cardService';
 
