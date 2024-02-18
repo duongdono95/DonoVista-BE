@@ -22,6 +22,15 @@ const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
         throw error;
     }
 });
+const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield boardModel_1.boardModel.getBoardById(new mongodb_1.ObjectId(boardId));
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
 const createNew = (validatedRequest) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const newBoard = Object.assign(Object.assign({}, validatedRequest), { slug: (0, formatter_1.slugify)(validatedRequest.title) });
@@ -48,15 +57,6 @@ const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function*
         const result = yield boardModel_1.boardModel.deleteOneById(boardId);
         if (result.deletedCount === 0)
             throw new Error('Delete Required Board Failed');
-        return result;
-    }
-    catch (error) {
-        throw error;
-    }
-});
-const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = yield boardModel_1.boardModel.getBoardById(new mongodb_1.ObjectId(boardId));
         return result;
     }
     catch (error) {

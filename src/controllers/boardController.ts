@@ -40,6 +40,22 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+const getBoardById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const boardId = req.params.id;
+        if (!boardId) throw new Error('Board Id is required');
+        const result = await boardService.getBoardById(boardId);
+        if (!result) throw new Error('Fetch Board Detail failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Fetch Board Detail Successfully',
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const updateBoardById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const boardId = req.params.id;
@@ -74,21 +90,6 @@ const deleteBoardById = async (req: Request, res: Response, next: NextFunction) 
         res.status(200).json({
             code: 200,
             message: 'Delete Board Successfully',
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-const getBoardById = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const boardId = req.params.id;
-        if (!boardId) throw new Error('Board Id is required');
-        const result = await boardService.getBoardById(boardId);
-        if (!result) throw new Error('Fetch Board Detail failed');
-        res.status(200).json({
-            code: 200,
-            message: 'Fetch Board Detail Successfully',
-            data: result,
         });
     } catch (error) {
         next(error);

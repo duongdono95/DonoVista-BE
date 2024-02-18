@@ -13,6 +13,15 @@ const getAllBoards = async () => {
     }
 };
 
+const getBoardById = async (boardId: string) => {
+    try {
+        const result = await boardModel.getBoardById(new ObjectId(boardId));
+        return result;
+    } catch (error) {
+        throw error;
+    }
+};
+
 const createNew = async (validatedRequest: Omit<z.infer<typeof BoardSchemaZodWithId>, '_id'>) => {
     try {
         const newBoard = { ...validatedRequest, slug: slugify(validatedRequest.title) };
@@ -36,15 +45,6 @@ const deleteBoardById = async (boardId: string) => {
     try {
         const result = await boardModel.deleteOneById(boardId);
         if (result.deletedCount === 0) throw new Error('Delete Required Board Failed');
-        return result;
-    } catch (error) {
-        throw error;
-    }
-};
-
-const getBoardById = async (boardId: string) => {
-    try {
-        const result = await boardModel.getBoardById(new ObjectId(boardId));
         return result;
     } catch (error) {
         throw error;

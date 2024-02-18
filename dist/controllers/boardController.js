@@ -49,6 +49,24 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         next(error);
     }
 });
+const getBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const boardId = req.params.id;
+        if (!boardId)
+            throw new Error('Board Id is required');
+        const result = yield boardService_1.boardService.getBoardById(boardId);
+        if (!result)
+            throw new Error('Fetch Board Detail failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Fetch Board Detail Successfully',
+            data: result,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 const updateBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const boardId = req.params.id;
@@ -86,24 +104,6 @@ const deleteBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         res.status(200).json({
             code: 200,
             message: 'Delete Board Successfully',
-        });
-    }
-    catch (error) {
-        next(error);
-    }
-});
-const getBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const boardId = req.params.id;
-        if (!boardId)
-            throw new Error('Board Id is required');
-        const result = yield boardService_1.boardService.getBoardById(boardId);
-        if (!result)
-            throw new Error('Fetch Board Detail failed');
-        res.status(200).json({
-            code: 200,
-            message: 'Fetch Board Detail Successfully',
-            data: result,
         });
     }
     catch (error) {
