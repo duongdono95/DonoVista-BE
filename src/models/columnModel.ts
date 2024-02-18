@@ -1,10 +1,4 @@
-import {
-    BoardSchemaZodWithId,
-    CardSchemaZodWithID,
-    ColumnSchemaZodWithId,
-    ComponentTypeEnum,
-    VisibilityTypeEnum,
-} from '../zod/generalTypes';
+import { CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
@@ -125,7 +119,7 @@ const arrangeCards = async (
             }
         });
         if (startColumnId !== endColumnId) {
-            const test = await GET_DB()
+            const updateEndColumn = await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)
                 .updateOne(
                     { _id: new ObjectId(endColumnId) },

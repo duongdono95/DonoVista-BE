@@ -127,7 +127,7 @@ const arrangeCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, v
             }
         });
         if (startColumnId !== endColumnId) {
-            const test = yield (0, mongodb_1.GET_DB)()
+            const updateEndColumn = yield (0, mongodb_1.GET_DB)()
                 .collection(exports.COLUMN_COLLECTION_NAME)
                 .updateOne({ _id: new mongodb_2.ObjectId(endColumnId) }, {
                 $set: Object.assign(Object.assign({}, endColumn), { updatedAt: new Date().toString() }),
