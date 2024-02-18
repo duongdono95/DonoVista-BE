@@ -155,10 +155,11 @@ const arrangeCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, v
 });
 const duplicateColumn = (validatedNewColumn, validatedOriginalColumn, validatedActiveCard) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id: columnId, cards } = validatedNewColumn, restColumn = __rest(validatedNewColumn, ["_id", "cards"]);
+    const newColumnId = new mongodb_2.ObjectId();
     let duplicatedCards = [];
     let newCardOrderIds = [];
     try {
-        const newColumnId = new mongodb_2.ObjectId();
+        // ------------------ Create New Cards in required Column ------------------
         if (validatedNewColumn.cards.length > 0 && !validatedOriginalColumn && !validatedActiveCard) {
             for (const card of cards) {
                 const { _id } = card, rest = __rest(card, ["_id"]);

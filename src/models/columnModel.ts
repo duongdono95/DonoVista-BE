@@ -174,10 +174,12 @@ const duplicateColumn = async (
     validatedActiveCard?: z.infer<typeof CardSchemaZodWithID>,
 ) => {
     const { _id: columnId, cards, ...restColumn } = validatedNewColumn;
+    const newColumnId = new ObjectId();
     let duplicatedCards = [];
     let newCardOrderIds = [];
     try {
-        const newColumnId = new ObjectId();
+
+        // ------------------ Create New Cards in required Column ------------------
         if (validatedNewColumn.cards.length > 0 && !validatedOriginalColumn && !validatedActiveCard) {
             for (const card of cards) {
                 const { _id, ...rest } = card;
@@ -186,7 +188,6 @@ const duplicateColumn = async (
                     columnId: new ObjectId(newColumnId).toString(),
                     _id: new ObjectId(),
                 };
-
                 const addNewCardResult = await GET_DB().collection('cards').insertOne(newCard);
                 if (!addNewCardResult.insertedId) throw new Error('Duplicate Column Failed');
                 duplicatedCards.push(newCard);
