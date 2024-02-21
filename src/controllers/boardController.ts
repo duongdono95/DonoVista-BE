@@ -2,11 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import { BoardSchemaZodWithId } from '../zod/generalTypes';
 import { StatusCodes } from 'http-status-codes';
 import { boardService } from '../services/boardService';
-import { slugify } from '../utils/formatter';
 
 const getAllBoards = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const boards = await boardService.getAllBoards();
+        const userId = req.params.id;
+        console.log(userId);
+        const boards = await boardService.getAllBoards(userId);
         if (!boards) res.status(200).json({ message: 'No Board was found' });
         return res.status(200).json({
             code: 200,

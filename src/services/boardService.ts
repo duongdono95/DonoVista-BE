@@ -4,9 +4,9 @@ import { slugify } from '../utils/formatter';
 import { boardModel } from '../models/boardModel';
 import { ObjectId } from 'mongodb';
 
-const getAllBoards = async () => {
+const getAllBoards = async (userId: string) => {
     try {
-        const boards = await boardModel.getAllBoards();
+        const boards = await boardModel.getAllBoards(userId);
         return boards;
     } catch (error) {
         throw error;

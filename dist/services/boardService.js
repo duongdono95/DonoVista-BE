@@ -13,9 +13,9 @@ exports.boardService = void 0;
 const formatter_1 = require("../utils/formatter");
 const boardModel_1 = require("../models/boardModel");
 const mongodb_1 = require("mongodb");
-const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
+const getAllBoards = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const boards = yield boardModel_1.boardModel.getAllBoards();
+        const boards = yield boardModel_1.boardModel.getAllBoards(userId);
         return boards;
     }
     catch (error) {

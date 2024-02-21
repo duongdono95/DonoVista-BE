@@ -6,7 +6,7 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const validateRequest = await ColumnSchemaZodWithId.omit({ _id: true }).safeParseAsync(req.body);
         if (!validateRequest.success) {
-            throw new Error('Validate Create New Column Request Failed');
+            throw new Error('Validate Create New test Request Failed');
         }
         const createdColumn = await columnService.createNew(validateRequest.data);
         res.status(200).json({

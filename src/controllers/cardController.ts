@@ -7,7 +7,7 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const validateRequest = await CardSchemaZodWithID.omit({ _id: true }).safeParseAsync(req.body);
         if (!validateRequest.success) {
-            throw new Error('Validate Create New Column Request Failed');
+            throw new Error('Validate Create New Card Request Failed');
         }
         const createdCard = await cardService.createNew(validateRequest.data);
         if (!createdCard) throw new Error('Create New Card Failed');

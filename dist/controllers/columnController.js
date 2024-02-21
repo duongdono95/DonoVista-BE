@@ -16,7 +16,7 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
     try {
         const validateRequest = yield generalTypes_1.ColumnSchemaZodWithId.omit({ _id: true }).safeParseAsync(req.body);
         if (!validateRequest.success) {
-            throw new Error('Validate Create New Column Request Failed');
+            throw new Error('Validate Create New test Request Failed');
         }
         const createdColumn = yield columnService_1.columnService.createNew(validateRequest.data);
         res.status(200).json({

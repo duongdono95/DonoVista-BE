@@ -16,7 +16,7 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
     try {
         const validateRequest = yield generalTypes_1.CardSchemaZodWithID.omit({ _id: true }).safeParseAsync(req.body);
         if (!validateRequest.success) {
-            throw new Error('Validate Create New Column Request Failed');
+            throw new Error('Validate Create New Card Request Failed');
         }
         const createdCard = yield cardService_1.cardService.createNew(validateRequest.data);
         if (!createdCard)

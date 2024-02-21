@@ -4,14 +4,20 @@ import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
 import { CARD_COLLECTION_NAME, cardModel } from './cardModel';
+import { USER_COLLECTION_NAME } from './userModel';
 
 export const BOARD_COLLECTION_NAME = 'boards';
 
 const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 
-const getAllBoards = async () => {
+const getAllBoards = async (userId: string) => {
+    console.log(userId);
     try {
-        const result = await GET_DB().collection(BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
+        const result = await GET_DB()
+            .collection(BOARD_COLLECTION_NAME)
+            .find({ ownerID: userId })
+            .sort({ createdAt: -1 })
+            .toArray();
         return result;
     } catch (error) {
         throw new Error('Get All Boards Failed');
@@ -19,11 +25,26 @@ const getAllBoards = async () => {
 };
 
 const createNew = async (board: Omit<z.infer<typeof BoardSchemaZodWithId>, '_id'>) => {
+    console.log(board);
     try {
-        const createdBoard = await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(board);
-        return createdBoard;
+        const creatingResult = await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(board);
+        if (!creatingResult.insertedId) throw new Error('Create New Board Failed');
+        const createdBoard = await getBoardById(new ObjectId(creatingResult.insertedId));
+        if (!createdBoard) throw new Error('Create new board - Created Board not found');
+        const updateUser = await GET_DB()
+            .collection(USER_COLLECTION_NAME)
+            .updateOne(
+                { _id: new ObjectId(board.ownerId) },
+                {
+                    $push: {
+                        boards: createdBoard,
+                    },
+                },
+            );
+        if (updateUser.modifiedCount === 0) throw new Error('Create new board - Update User Failed');
+        return creatingResult;
     } catch (error) {
-        throw new Error('Create New Board Failed');
+        throw error;
     }
 };
 
@@ -135,6 +156,7 @@ const updateAggregateColumns = async (boardId: ObjectId) => {
         throw new Error('Get Board Failed');
     }
 };
+
 export const boardModel = {
     createNew,
     getAllBoards,

@@ -15,7 +15,9 @@ const http_status_codes_1 = require("http-status-codes");
 const boardService_1 = require("../services/boardService");
 const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const boards = yield boardService_1.boardService.getAllBoards();
+        const userId = req.params.id;
+        console.log(userId);
+        const boards = yield boardService_1.boardService.getAllBoards(userId);
         if (!boards)
             res.status(200).json({ message: 'No Board was found' });
         return res.status(200).json({
