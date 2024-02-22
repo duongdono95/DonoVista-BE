@@ -1,7 +1,8 @@
 import { ObjectId } from 'mongodb';
 import { GET_DB } from '../config/mongodb';
-import { userInterface, userSchema } from '../zod/generalTypes';
+import { BoardSchemaZodWithId, userInterface, userSchema } from '../zod/generalTypes';
 import { BOARD_COLLECTION_NAME } from './boardModel';
+import { z } from 'zod';
 
 export const USER_COLLECTION_NAME = 'users';
 
@@ -10,6 +11,10 @@ const INVALID_RETURNED_VALUE = ['password'];
 
 const createNew = async (req: userInterface) => {
     try {
+        if (req._id === 'guestId') {
+            delete req['_id' as keyof z.infer<typeof userSchema>];
+        }
+
         const validateExistingUser = await GET_DB()
             .collection(USER_COLLECTION_NAME)
             .find({ email: req.email })

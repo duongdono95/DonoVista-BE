@@ -17,6 +17,9 @@ const INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
 const INVALID_RETURNED_VALUE = ['password'];
 const createNew = (req) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        if (req._id === 'guestId') {
+            delete req['_id'];
+        }
         const validateExistingUser = yield (0, mongodb_2.GET_DB)()
             .collection(exports.USER_COLLECTION_NAME)
             .find({ email: req.email })

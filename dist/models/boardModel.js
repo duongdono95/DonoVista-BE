@@ -18,11 +18,10 @@ const userModel_1 = require("./userModel");
 exports.BOARD_COLLECTION_NAME = 'boards';
 const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 const getAllBoards = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(userId);
     try {
         const result = yield (0, mongodb_1.GET_DB)()
             .collection(exports.BOARD_COLLECTION_NAME)
-            .find({ ownerID: userId })
+            .find({ ownerId: userId })
             .sort({ createdAt: -1 })
             .toArray();
         return result;

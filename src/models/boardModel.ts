@@ -11,11 +11,10 @@ export const BOARD_COLLECTION_NAME = 'boards';
 const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
 
 const getAllBoards = async (userId: string) => {
-    console.log(userId);
     try {
         const result = await GET_DB()
             .collection(BOARD_COLLECTION_NAME)
-            .find({ ownerID: userId })
+            .find({ ownerId: userId })
             .sort({ createdAt: -1 })
             .toArray();
         return result;
