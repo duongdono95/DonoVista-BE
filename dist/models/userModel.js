@@ -16,6 +16,7 @@ exports.USER_COLLECTION_NAME = 'users';
 const INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
 const INVALID_RETURNED_VALUE = ['password'];
 const createNew = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(req);
     try {
         if (req._id === 'guestId') {
             delete req['_id'];
@@ -25,11 +26,16 @@ const createNew = (req) => __awaiter(void 0, void 0, void 0, function* () {
             .find({ email: req.email })
             .toArray();
         if (validateExistingUser.length > 0) {
-            return {
-                message: 'The Email has already been taken.',
-                path: 'email',
-                code: 300,
-            };
+            if (validateExistingUser[0].lastName === 'firebase') {
+                return signIn(req.email, req.password);
+            }
+            else {
+                return {
+                    message: 'The Email has already been taken.',
+                    path: 'email',
+                    code: 300,
+                };
+            }
         }
         else {
             const createdUserResult = yield (0, mongodb_2.GET_DB)().collection(exports.USER_COLLECTION_NAME).insertOne(req);

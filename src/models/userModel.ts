@@ -10,21 +10,25 @@ const INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
 const INVALID_RETURNED_VALUE = ['password'];
 
 const createNew = async (req: userInterface) => {
+    console.log(req);
     try {
         if (req._id === 'guestId') {
             delete req['_id' as keyof z.infer<typeof userSchema>];
         }
-
         const validateExistingUser = await GET_DB()
             .collection(USER_COLLECTION_NAME)
             .find({ email: req.email })
             .toArray();
         if (validateExistingUser.length > 0) {
-            return {
-                message: 'The Email has already been taken.',
-                path: 'email',
-                code: 300,
-            };
+            if (validateExistingUser[0].lastName === 'firebase') {
+                return signIn(req.email, req.password);
+            } else {
+                return {
+                    message: 'The Email has already been taken.',
+                    path: 'email',
+                    code: 300,
+                };
+            }
         } else {
             const createdUserResult = await GET_DB().collection(USER_COLLECTION_NAME).insertOne(req);
             if (!createdUserResult.insertedId) throw new Error('Create New User failed');
