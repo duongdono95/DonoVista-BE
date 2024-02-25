@@ -4,10 +4,19 @@ import { slugify } from '../utils/formatter';
 import { boardModel } from '../models/boardModel';
 import { ObjectId } from 'mongodb';
 
-const getAllBoards = async () => {
+const getAllBoards = async (userId: string) => {
     try {
-        const boards = await boardModel.getAllBoards();
+        const boards = await boardModel.getAllBoards(userId);
         return boards;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const getBoardById = async (boardId: string) => {
+    try {
+        const result = await boardModel.getBoardById(new ObjectId(boardId));
+        return result;
     } catch (error) {
         throw error;
     }
@@ -36,15 +45,6 @@ const deleteBoardById = async (boardId: string) => {
     try {
         const result = await boardModel.deleteOneById(boardId);
         if (result.deletedCount === 0) throw new Error('Delete Required Board Failed');
-        return result;
-    } catch (error) {
-        throw error;
-    }
-};
-
-const getBoardById = async (boardId: string) => {
-    try {
-        const result = await boardModel.getBoardById(new ObjectId(boardId));
         return result;
     } catch (error) {
         throw error;

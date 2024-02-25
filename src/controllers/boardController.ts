@@ -2,11 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import { BoardSchemaZodWithId } from '../zod/generalTypes';
 import { StatusCodes } from 'http-status-codes';
 import { boardService } from '../services/boardService';
-import { slugify } from '../utils/formatter';
 
 const getAllBoards = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const boards = await boardService.getAllBoards();
+        const userId = req.params.id;
+        console.log(userId);
+        const boards = await boardService.getAllBoards(userId);
         if (!boards) res.status(200).json({ message: 'No Board was found' });
         return res.status(200).json({
             code: 200,
@@ -34,6 +35,22 @@ const createNew = async (req: Request, res: Response, next: NextFunction) => {
             code: 200,
             message: 'Created New Board Successfully',
             data: createdBoard,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getBoardById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const boardId = req.params.id;
+        if (!boardId) throw new Error('Board Id is required');
+        const result = await boardService.getBoardById(boardId);
+        if (!result) throw new Error('Fetch Board Detail failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Fetch Board Detail Successfully',
+            data: result,
         });
     } catch (error) {
         next(error);
@@ -74,21 +91,6 @@ const deleteBoardById = async (req: Request, res: Response, next: NextFunction) 
         res.status(200).json({
             code: 200,
             message: 'Delete Board Successfully',
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-const getBoardById = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const boardId = req.params.id;
-        if (!boardId) throw new Error('Board Id is required');
-        const result = await boardService.getBoardById(boardId);
-        if (!result) throw new Error('Fetch Board Detail failed');
-        res.status(200).json({
-            code: 200,
-            message: 'Fetch Board Detail Successfully',
-            data: result,
         });
     } catch (error) {
         next(error);

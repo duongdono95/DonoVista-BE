@@ -13,10 +13,19 @@ exports.boardService = void 0;
 const formatter_1 = require("../utils/formatter");
 const boardModel_1 = require("../models/boardModel");
 const mongodb_1 = require("mongodb");
-const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
+const getAllBoards = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const boards = yield boardModel_1.boardModel.getAllBoards();
+        const boards = yield boardModel_1.boardModel.getAllBoards(userId);
         return boards;
+    }
+    catch (error) {
+        throw error;
+    }
+});
+const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield boardModel_1.boardModel.getBoardById(new mongodb_1.ObjectId(boardId));
+        return result;
     }
     catch (error) {
         throw error;
@@ -48,15 +57,6 @@ const deleteBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function*
         const result = yield boardModel_1.boardModel.deleteOneById(boardId);
         if (result.deletedCount === 0)
             throw new Error('Delete Required Board Failed');
-        return result;
-    }
-    catch (error) {
-        throw error;
-    }
-});
-const getBoardById = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = yield boardModel_1.boardModel.getBoardById(new mongodb_1.ObjectId(boardId));
         return result;
     }
     catch (error) {

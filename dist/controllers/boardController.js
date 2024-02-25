@@ -15,7 +15,9 @@ const http_status_codes_1 = require("http-status-codes");
 const boardService_1 = require("../services/boardService");
 const getAllBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const boards = yield boardService_1.boardService.getAllBoards();
+        const userId = req.params.id;
+        console.log(userId);
+        const boards = yield boardService_1.boardService.getAllBoards(userId);
         if (!boards)
             res.status(200).json({ message: 'No Board was found' });
         return res.status(200).json({
@@ -43,6 +45,24 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             code: 200,
             message: 'Created New Board Successfully',
             data: createdBoard,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const getBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const boardId = req.params.id;
+        if (!boardId)
+            throw new Error('Board Id is required');
+        const result = yield boardService_1.boardService.getBoardById(boardId);
+        if (!result)
+            throw new Error('Fetch Board Detail failed');
+        res.status(200).json({
+            code: 200,
+            message: 'Fetch Board Detail Successfully',
+            data: result,
         });
     }
     catch (error) {
@@ -86,24 +106,6 @@ const deleteBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         res.status(200).json({
             code: 200,
             message: 'Delete Board Successfully',
-        });
-    }
-    catch (error) {
-        next(error);
-    }
-});
-const getBoardById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const boardId = req.params.id;
-        if (!boardId)
-            throw new Error('Board Id is required');
-        const result = yield boardService_1.boardService.getBoardById(boardId);
-        if (!result)
-            throw new Error('Fetch Board Detail failed');
-        res.status(200).json({
-            code: 200,
-            message: 'Fetch Board Detail Successfully',
-            data: result,
         });
     }
     catch (error) {

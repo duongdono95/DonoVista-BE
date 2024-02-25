@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BoardSchemaZodWithId = exports.ColumnSchemaZodWithId = exports.CardSchemaZodWithID = exports.ComponentTypeEnum = exports.VisibilityTypeEnum = void 0;
+exports.userSchema = exports.ValidateSignInForm = exports.BoardSchemaZodWithId = exports.ColumnSchemaZodWithId = exports.CardSchemaZodWithID = exports.ComponentTypeEnum = exports.VisibilityTypeEnum = void 0;
 const zod_1 = require("zod");
 var VisibilityTypeEnum;
 (function (VisibilityTypeEnum) {
@@ -55,4 +55,21 @@ exports.BoardSchemaZodWithId = zod_1.z.object({
     createdAt: zod_1.z.string().default(() => new Date().toString()),
     updatedAt: zod_1.z.string().nullable().default(null),
     _destroy: zod_1.z.boolean().default(false),
+});
+// ---------------------------------- User --------------------------------------
+exports.ValidateSignInForm = zod_1.z.object({
+    email: zod_1.z.string().email({ message: 'Invalid email' }),
+    password: zod_1.z
+        .string()
+        .min(6, { message: 'Password must be between 6 and 50 characters' })
+        .max(50, { message: 'Password must be between 6 and 50 characters' }),
+});
+exports.userSchema = zod_1.z.object({
+    _id: zod_1.z.string().or(zod_1.z.any()),
+    firstName: zod_1.z.string().min(3).max(50),
+    lastName: zod_1.z.string().min(3).max(50),
+    email: zod_1.z.string().email(),
+    password: zod_1.z.string().min(6).max(50),
+    createdAt: zod_1.z.string().optional().default(new Date().toString()),
+    updatedAt: zod_1.z.string().optional().nullable().default(null),
 });

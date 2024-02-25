@@ -14,11 +14,16 @@ const mongodb_1 = require("../config/mongodb");
 const mongodb_2 = require("mongodb");
 const columnModel_1 = require("./columnModel");
 const cardModel_1 = require("./cardModel");
+const userModel_1 = require("./userModel");
 exports.BOARD_COLLECTION_NAME = 'boards';
 const INVALID_UPDATED_FIELDS = ['_id', 'ownerId', 'createdAt'];
-const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
+const getAllBoards = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).find().sort({ createdAt: -1 }).toArray();
+        const result = yield (0, mongodb_1.GET_DB)()
+            .collection(exports.BOARD_COLLECTION_NAME)
+            .find({ ownerId: userId })
+            .sort({ createdAt: -1 })
+            .toArray();
         return result;
     }
     catch (error) {
@@ -26,12 +31,27 @@ const getAllBoards = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const createNew = (board) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(board);
     try {
-        const createdBoard = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).insertOne(board);
-        return createdBoard;
+        const creatingResult = yield (0, mongodb_1.GET_DB)().collection(exports.BOARD_COLLECTION_NAME).insertOne(board);
+        if (!creatingResult.insertedId)
+            throw new Error('Create New Board Failed');
+        const createdBoard = yield getBoardById(new mongodb_2.ObjectId(creatingResult.insertedId));
+        if (!createdBoard)
+            throw new Error('Create new board - Created Board not found');
+        const updateUser = yield (0, mongodb_1.GET_DB)()
+            .collection(userModel_1.USER_COLLECTION_NAME)
+            .updateOne({ _id: new mongodb_2.ObjectId(board.ownerId) }, {
+            $push: {
+                boards: createdBoard,
+            },
+        });
+        if (updateUser.modifiedCount === 0)
+            throw new Error('Create new board - Update User Failed');
+        return creatingResult;
     }
     catch (error) {
-        throw new Error('Create New Board Failed');
+        throw error;
     }
 });
 const getBoardById = (id) => __awaiter(void 0, void 0, void 0, function* () {

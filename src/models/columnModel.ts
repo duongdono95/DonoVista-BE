@@ -1,10 +1,4 @@
-import {
-    BoardSchemaZodWithId,
-    CardSchemaZodWithID,
-    ColumnSchemaZodWithId,
-    ComponentTypeEnum,
-    VisibilityTypeEnum,
-} from '../zod/generalTypes';
+import { CardSchemaZodWithID, ColumnSchemaZodWithId } from '../zod/generalTypes';
 import { GET_DB, START_SESSION } from '../config/mongodb';
 import { ObjectId } from 'mongodb';
 import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
@@ -125,7 +119,7 @@ const arrangeCards = async (
             }
         });
         if (startColumnId !== endColumnId) {
-            const test = await GET_DB()
+            const updateEndColumn = await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)
                 .updateOne(
                     { _id: new ObjectId(endColumnId) },
@@ -174,10 +168,12 @@ const duplicateColumn = async (
     validatedActiveCard?: z.infer<typeof CardSchemaZodWithID>,
 ) => {
     const { _id: columnId, cards, ...restColumn } = validatedNewColumn;
+    const newColumnId = new ObjectId();
     let duplicatedCards = [];
     let newCardOrderIds = [];
     try {
-        const newColumnId = new ObjectId();
+
+        // ------------------ Create New Cards in required Column ------------------
         if (validatedNewColumn.cards.length > 0 && !validatedOriginalColumn && !validatedActiveCard) {
             for (const card of cards) {
                 const { _id, ...rest } = card;
@@ -186,7 +182,6 @@ const duplicateColumn = async (
                     columnId: new ObjectId(newColumnId).toString(),
                     _id: new ObjectId(),
                 };
-
                 const addNewCardResult = await GET_DB().collection('cards').insertOne(newCard);
                 if (!addNewCardResult.insertedId) throw new Error('Duplicate Column Failed');
                 duplicatedCards.push(newCard);

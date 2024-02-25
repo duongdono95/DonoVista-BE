@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 export enum VisibilityTypeEnum {
@@ -55,3 +56,25 @@ export const BoardSchemaZodWithId = z.object({
     updatedAt: z.string().nullable().default(null),
     _destroy: z.boolean().default(false),
 });
+
+// ---------------------------------- User --------------------------------------
+
+export const ValidateSignInForm = z.object({
+    email: z.string().email({ message: 'Invalid email' }),
+    password: z
+        .string()
+        .min(6, { message: 'Password must be between 6 and 50 characters' })
+        .max(50, { message: 'Password must be between 6 and 50 characters' }),
+});
+export type SignInFormInterface = z.infer<typeof ValidateSignInForm>;
+
+export const userSchema = z.object({
+    _id: z.string().or(z.any()),
+    firstName: z.string().min(3).max(50),
+    lastName: z.string().min(3).max(50),
+    email: z.string().email(),
+    password: z.string().min(6).max(50),
+    createdAt: z.string().optional().default(new Date().toString()),
+    updatedAt: z.string().optional().nullable().default(null),
+});
+export type userInterface = z.infer<typeof userSchema>;
