@@ -14,7 +14,7 @@ const generalTypes_1 = require("../zod/generalTypes");
 const columnService_1 = require("../services/columnService");
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validateRequest = yield generalTypes_1.ColumnSchemaZodWithId.omit({ _id: true }).safeParseAsync(req.body);
+        const validateRequest = yield generalTypes_1.ColumnSchema.safeParseAsync(req.body);
         if (!validateRequest.success) {
             throw new Error('Validate Create New test Request Failed');
         }
@@ -44,7 +44,7 @@ const deleteColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, f
 });
 const updateColumnById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validateRequest = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body);
+        const validateRequest = yield generalTypes_1.ColumnSchema.safeParseAsync(req.body);
         if (!validateRequest.success)
             throw new Error('Validate Update Column Request Failed');
         const result = yield columnService_1.columnService.updateColumnById(req.params.id, validateRequest.data);
@@ -66,9 +66,9 @@ const arrangeCards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         if (!req.body)
             throw new Error('Update Card In Bulk Request missing required fields');
         const validatedRequest = {
-            startColumn: yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.originalColumn),
-            endColumn: yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.overColumn),
-            activeCard: yield generalTypes_1.CardSchemaZodWithID.safeParseAsync(req.body.activeCard),
+            startColumn: yield generalTypes_1.ColumnSchema.safeParseAsync(req.body.originalColumn),
+            endColumn: yield generalTypes_1.ColumnSchema.safeParseAsync(req.body.overColumn),
+            activeCard: yield generalTypes_1.CardSchema.safeParseAsync(req.body.activeCard),
         };
         if (!validatedRequest.startColumn.success ||
             !validatedRequest.endColumn.success ||
@@ -89,7 +89,7 @@ const arrangeCards = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
 });
 const duplicateColumn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validatedColumn = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.column);
+        const validatedColumn = yield generalTypes_1.ColumnSchema.safeParseAsync(req.body.column);
         if (!validatedColumn.success)
             throw new Error('Validate Duplicate Column Request Failed');
         const result = yield columnService_1.columnService.duplicateColumn(validatedColumn.data);
@@ -107,9 +107,9 @@ const duplicateColumn = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
 });
 const duplicateCard = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validatedOriginalColumn = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.originalColumn);
-        const validatedNewColumn = yield generalTypes_1.ColumnSchemaZodWithId.safeParseAsync(req.body.newColumn);
-        const validatedActiveCard = yield generalTypes_1.CardSchemaZodWithID.safeParseAsync(req.body.activeCard);
+        const validatedOriginalColumn = yield generalTypes_1.ColumnSchema.safeParseAsync(req.body.originalColumn);
+        const validatedNewColumn = yield generalTypes_1.ColumnSchema.safeParseAsync(req.body.newColumn);
+        const validatedActiveCard = yield generalTypes_1.CardSchema.safeParseAsync(req.body.activeCard);
         if (!validatedOriginalColumn.success || !validatedNewColumn.success || !validatedActiveCard.success)
             throw new Error('Validate Duplicate Column Request Failed');
         const result = yield columnService_1.columnService.duplicateCard(validatedOriginalColumn.data, validatedNewColumn.data, validatedActiveCard.data);

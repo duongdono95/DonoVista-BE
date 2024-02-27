@@ -1,9 +1,8 @@
 import express from 'express';
-import { cardController } from '../controllers/cardController';
+import { cardController } from "../1.Controllers/cardController";
 
 const Router = express.Router();
 
-Router.route('/').post(cardController.createNew).delete(cardController.deleteCard);
-Router.route('/:id').put(cardController.updateCard);
+Router.route('/').post(cardController.createNew);
 
 export const cardRoute = Router;

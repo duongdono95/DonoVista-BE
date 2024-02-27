@@ -8,17 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.columnModel = exports.COLUMN_COLLECTION_NAME = void 0;
 const mongodb_1 = require("../config/mongodb");
@@ -143,123 +132,140 @@ const arrangeCards = (startColumn, endColumn, activeCard) => __awaiter(void 0, v
             .updateOne({ _id: new mongodb_2.ObjectId(startColumnId) }, {
             $set: Object.assign(Object.assign({}, startColumn), { updatedAt: new Date().toString() }),
         });
-        const updateColumnResult = yield updateAggregateCards(new mongodb_2.ObjectId(endColumnId));
+        // const updateColumnResult = await updateAggregateCards(new ObjectId(endColumnId));
         const updateBoardResult = yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_2.ObjectId(startColumn.boardId));
-        if (updateBoardResult.code !== 200 || updateColumnResult.code !== 200)
-            throw new Error('Update Column Failed');
+        // if (updateBoardResult.code !== 200 || updateColumnResult.code !== 200) throw new Error('Update Column Failed');
         return { message: 'Update Column Successfully' };
     }
     catch (error) {
         throw error;
     }
 });
-const duplicateColumn = (validatedNewColumn, validatedOriginalColumn, validatedActiveCard) => __awaiter(void 0, void 0, void 0, function* () {
-    const { _id: columnId, cards } = validatedNewColumn, restColumn = __rest(validatedNewColumn, ["_id", "cards"]);
-    const newColumnId = new mongodb_2.ObjectId();
-    let duplicatedCards = [];
-    let newCardOrderIds = [];
-    try {
-        // ------------------ Create New Cards in required Column ------------------
-        if (validatedNewColumn.cards.length > 0 && !validatedOriginalColumn && !validatedActiveCard) {
-            for (const card of cards) {
-                const { _id } = card, rest = __rest(card, ["_id"]);
-                const newCard = Object.assign(Object.assign({}, rest), { columnId: new mongodb_2.ObjectId(newColumnId).toString(), _id: new mongodb_2.ObjectId() });
-                const addNewCardResult = yield (0, mongodb_1.GET_DB)().collection('cards').insertOne(newCard);
-                if (!addNewCardResult.insertedId)
-                    throw new Error('Duplicate Column Failed');
-                duplicatedCards.push(newCard);
-                newCardOrderIds.push(newCard._id.toString());
-            }
-        }
-        if (validatedActiveCard && validatedOriginalColumn) {
-            const originalColumnCards = validatedOriginalColumn.cards.filter((card) => card._id !== validatedActiveCard._id);
-            const updateOriginalColumnResult = yield (0, mongodb_1.GET_DB)()
-                .collection(exports.COLUMN_COLLECTION_NAME)
-                .updateOne({ _id: new mongodb_2.ObjectId(validatedOriginalColumn._id) }, {
-                $set: {
-                    cards: originalColumnCards,
-                    cardOrderIds: originalColumnCards.map((card) => card._id.toString()),
-                    updatedAt: new Date().toISOString(),
-                },
-            });
-            const updateActiveCardResult = yield (0, mongodb_1.GET_DB)()
-                .collection(exports.COLUMN_COLLECTION_NAME)
-                .updateOne({ _id: new mongodb_2.ObjectId(validatedActiveCard._id) }, {
-                $set: {
-                    columnId: newColumnId.toString(),
-                    updatedAt: new Date().toISOString(),
-                },
-            });
-            if (updateOriginalColumnResult.modifiedCount === 0)
-                throw new Error('Duplicate Column Failed');
-            yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_2.ObjectId(validatedOriginalColumn.boardId));
-            duplicatedCards.push(Object.assign(Object.assign({}, validatedActiveCard), { columnId: newColumnId.toString() }));
-            newCardOrderIds.push(validatedActiveCard._id.toString());
-        }
-        const newColumnWithId = Object.assign(Object.assign({}, restColumn), { cards: duplicatedCards, cardOrderIds: newCardOrderIds, title: validatedActiveCard ? 'New Column' : `${restColumn.title}`, createdAt: new Date().toString(), _id: new mongodb_2.ObjectId(newColumnId) });
-        const createNewColumnResult = yield (0, mongodb_1.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).insertOne(newColumnWithId);
-        if (!createNewColumnResult.insertedId)
-            throw new Error('Duplicate Column Failed');
-        const updateBoardResult = yield (0, mongodb_1.GET_DB)()
-            .collection(boardModel_1.BOARD_COLLECTION_NAME)
-            .updateOne({ _id: new mongodb_2.ObjectId(validatedNewColumn.boardId) }, {
-            $push: {
-                columns: newColumnWithId,
-                columnOrderIds: newColumnWithId._id.toString(),
-            },
-            $set: { updatedAt: new Date().toISOString() },
-        });
-        if (updateBoardResult.modifiedCount === 0)
-            throw new Error('Duplicate Column Failed');
-        return newColumnWithId;
-    }
-    catch (error) {
-        throw new Error('Duplicate Column Failed');
-    }
-});
-const updateAggregateCards = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const cards = yield (0, mongodb_1.GET_DB)()
-            .collection(exports.COLUMN_COLLECTION_NAME)
-            .aggregate([
-            {
-                $match: {
-                    _id: new mongodb_2.ObjectId(id),
-                    _destroy: false,
-                },
-            },
-            {
-                $lookup: {
-                    from: cardModel_1.CARD_COLLECTION_NAME,
-                    let: { columnId: { $toString: '$_id' } },
-                    as: 'cards',
-                    pipeline: [{ $match: { $expr: { $eq: ['$columnId', '$$columnId'] } } }],
-                },
-            },
-        ])
-            .toArray();
-        if (!cards[0])
-            throw new Error('Column not found');
-        const updateColumnResult = yield (0, mongodb_1.GET_DB)()
-            .collection(exports.COLUMN_COLLECTION_NAME)
-            .updateOne({ _id: new mongodb_2.ObjectId(id) }, { $set: { cards: cards[0].cards } });
-        if (updateColumnResult.modifiedCount === 0)
-            throw new Error('Update Column Failed');
-        return {
-            code: 200,
-            message: 'Update Column Cards Success',
-        };
-    }
-    catch (error) {
-        throw new Error('Get Board Failed');
-    }
-});
+// const duplicateColumn = async (
+//     validatedNewColumn: z.infer<typeof ColumnSchema>,
+//     validatedOriginalColumn?: z.infer<typeof ColumnSchema>,
+//     validatedActiveCard?: z.infer<typeof CardSchema>,
+// ) => {
+//     const { _id: columnId, cards, ...restColumn } = validatedNewColumn;
+//     const newColumnId = new ObjectId();
+//     let duplicatedCards = [];
+//     let newCardOrderIds = [];
+//     try {
+//         // ------------------ Create New Cards in required Column ------------------
+//         if (validatedNewColumn.cards.length > 0 && !validatedOriginalColumn && !validatedActiveCard) {
+//             for (const card of cards) {
+//                 const { _id, ...rest } = card;
+//                 const newCard = {
+//                     ...rest,
+//                     columnId: new ObjectId(newColumnId).toString(),
+//                     _id: new ObjectId(),
+//                 };
+//                 const addNewCardResult = await GET_DB().collection('cards').insertOne(newCard);
+//                 if (!addNewCardResult.insertedId) throw new Error('Duplicate Column Failed');
+//                 duplicatedCards.push(newCard);
+//                 newCardOrderIds.push(newCard._id.toString());
+//             }
+//         }
+//         if (validatedActiveCard && validatedOriginalColumn) {
+//             const originalColumnCards = validatedOriginalColumn.cards.filter(
+//                 (card) => card._id !== validatedActiveCard._id,
+//             );
+//             const updateOriginalColumnResult = await GET_DB()
+//                 .collection(COLUMN_COLLECTION_NAME)
+//                 .updateOne(
+//                     { _id: new ObjectId(validatedOriginalColumn._id) },
+//                     {
+//                         $set: {
+//                             cards: originalColumnCards,
+//                             cardOrderIds: originalColumnCards.map((card) => card._id.toString()),
+//                             updatedAt: new Date().toISOString(),
+//                         },
+//                     },
+//                 );
+//             const updateActiveCardResult = await GET_DB()
+//                 .collection(COLUMN_COLLECTION_NAME)
+//                 .updateOne(
+//                     { _id: new ObjectId(validatedActiveCard._id) },
+//                     {
+//                         $set: {
+//                             columnId: newColumnId.toString(),
+//                             updatedAt: new Date().toISOString(),
+//                         },
+//                     },
+//                 );
+//             if (updateOriginalColumnResult.modifiedCount === 0) throw new Error('Duplicate Column Failed');
+//             await boardModel.updateAggregateColumns(new ObjectId(validatedOriginalColumn.boardId));
+//             duplicatedCards.push({ ...validatedActiveCard, columnId: newColumnId.toString() });
+//             newCardOrderIds.push(validatedActiveCard._id.toString());
+//         }
+//         const newColumnWithId = {
+//             ...restColumn,
+//             cards: duplicatedCards,
+//             cardOrderIds: newCardOrderIds,
+//             title: validatedActiveCard ? 'New Column' : `${restColumn.title}`,
+//             createdAt: new Date().toString(),
+//             _id: new ObjectId(newColumnId),
+//         };
+//         const createNewColumnResult = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumnWithId);
+//         if (!createNewColumnResult.insertedId) throw new Error('Duplicate Column Failed');
+//         const updateBoardResult = await GET_DB()
+//             .collection(BOARD_COLLECTION_NAME)
+//             .updateOne(
+//                 { _id: new ObjectId(validatedNewColumn.boardId) },
+//                 {
+//                     $push: {
+//                         columns: newColumnWithId as any,
+//                         columnOrderIds: newColumnWithId._id.toString() as any,
+//                     },
+//                     $set: { updatedAt: new Date().toISOString() },
+//                 },
+//             );
+//         if (updateBoardResult.modifiedCount === 0) throw new Error('Duplicate Column Failed');
+//         return newColumnWithId;
+//     } catch (error) {
+//         throw new Error('Duplicate Column Failed');
+//     }
+// };
+// const updateAggregateCards = async (id: ObjectId) => {
+//     try {
+//         const cards = await GET_DB()
+//             .collection(COLUMN_COLLECTION_NAME)
+//             .aggregate([
+//                 {
+//                     $match: {
+//                         _id: new ObjectId(id),
+//                         _destroy: false,
+//                     },
+//                 },
+//                 {
+//                     $lookup: {
+//                         from: CARD_COLLECTION_NAME,
+//                         let: { columnId: { $toString: '$_id' } },
+//                         as: 'cards',
+//                         pipeline: [{ $match: { $expr: { $eq: ['$columnId', '$$columnId'] } } }],
+//                     },
+//                 },
+//             ])
+//             .toArray();
+//         if (!cards[0]) throw new Error('Column not found');
+//         const updateColumnResult = await GET_DB()
+//             .collection(COLUMN_COLLECTION_NAME)
+//             .updateOne({ _id: new ObjectId(id) }, { $set: { cards: cards[0].cards } });
+//         if (updateColumnResult.modifiedCount === 0) throw new Error('Update Column Failed');
+//         return {
+//             code: 200,
+//             message: 'Update Column Cards Success',
+//         };
+//     } catch (error) {
+//         throw new Error('Get Board Failed');
+//     }
+// };
 exports.columnModel = {
     COLUMN_COLLECTION_NAME: exports.COLUMN_COLLECTION_NAME,
     createNew,
     deleteColumnById,
     updateColumnById,
     arrangeCards,
-    duplicateColumn,
-    updateAggregateCards,
+    // duplicateColumn,
+    // updateAggregateCards,
 };
