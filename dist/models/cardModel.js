@@ -70,10 +70,9 @@ const updateCard = (cardId, updateCard) => __awaiter(void 0, void 0, void 0, fun
             .findOneAndUpdate({ _id: new mongodb_1.ObjectId(cardId) }, {
             $set: Object.assign(Object.assign({}, updateCard), { updatedAt: new Date().toString() }),
         }, { returnDocument: 'after' });
-        const updateColumnResult = yield columnModel_1.columnModel.updateAggregateCards(new mongodb_1.ObjectId(updateCard.columnId));
-        const updateBoardResult = yield boardModel_1.boardModel.updateAggregateColumns(new mongodb_1.ObjectId(updateCard.boardId));
-        if (updateColumnResult.code !== 200 || updateBoardResult.code !== 200)
-            throw new Error('Delete Card Failed');
+        // const updateColumnResult = await columnModel.updateAggregateCards(new ObjectId(updateCard.columnId));
+        // const updateBoardResult = await boardModel.updateAggregateColumns(new ObjectId(updateCard.boardId));
+        // if (updateColumnResult.code !== 200 || updateBoardResult.code !== 200) throw new Error('Delete Card Failed');
         return updateCardResult;
     }
     catch (error) {

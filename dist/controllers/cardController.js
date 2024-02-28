@@ -14,7 +14,7 @@ const generalTypes_1 = require("../zod/generalTypes");
 const cardService_1 = require("../services/cardService");
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validateRequest = yield generalTypes_1.CardSchemaZodWithID.omit({ _id: true }).safeParseAsync(req.body);
+        const validateRequest = yield generalTypes_1.CardSchema.safeParseAsync(req.body);
         if (!validateRequest.success) {
             throw new Error('Validate Create New Card Request Failed');
         }
@@ -55,7 +55,7 @@ const updateCard = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
     try {
         if (!req.params.id)
             throw new Error('Update Card Request missing required Id');
-        const validateRequest = yield generalTypes_1.CardSchemaZodWithID.safeParseAsync(req.body);
+        const validateRequest = yield generalTypes_1.CardSchema.safeParseAsync(req.body);
         if (!validateRequest.success)
             throw new Error('Validate Update Card Request Failed');
         const result = yield cardService_1.cardService.updateCard(req.params.id, validateRequest.data);
