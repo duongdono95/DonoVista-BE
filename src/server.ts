@@ -5,7 +5,7 @@ import { corsOptions } from './config/cors';
 import { errorHandlingMiddleware } from './middlewares/errorHandlingMiddleware';
 import AsyncExitHook from 'async-exit-hook';
 import { env } from './config/environment';
-import { app_router } from './routes';
+import { app_router } from './0.routes';
 
 const port = process.env.APP_PORT || 3000;
 

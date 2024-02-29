@@ -21,6 +21,8 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         const result = yield boardService_1.boardService.createNew(validatedReq.data);
         res.status(200).json({
             data: result,
+            code: 200,
+            message: 'Created Board successfully',
         });
     }
     catch (error) {
@@ -29,10 +31,14 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 });
 const allBoards = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const userId = req.body.userId;
-        const result = yield boardService_1.boardService.allBoards(new mongodb_1.ObjectId(userId));
+        const userId = req.query.userId;
+        if (!userId)
+            throw new Error('User Id is required');
+        const result = yield boardService_1.boardService.allBoards(userId);
         res.status(200).json({
             data: result,
+            code: 200,
+            message: 'Fetched All Board successfully',
         });
     }
     catch (error) {
@@ -45,6 +51,8 @@ const getBoard = (req, res, next) => __awaiter(void 0, void 0, void 0, function*
         const result = yield boardService_1.boardService.getBoard(new mongodb_1.ObjectId(boardId));
         res.status(200).json({
             data: result,
+            code: 200,
+            message: 'Fetched Board successfully',
         });
     }
     catch (error) {
@@ -59,6 +67,8 @@ const updateBoard = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         const result = yield boardService_1.boardService.updateBoard(validatedBoard.data);
         res.status(200).json({
             data: result,
+            code: 200,
+            message: 'Board updated successfully',
         });
     }
     catch (error) {
@@ -67,13 +77,30 @@ const updateBoard = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
 });
 const deleteBoard = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const board = req.params.body;
-        const validatedBoard = generalTypes_1.BoardSchema.safeParse(board);
-        if (!validatedBoard.success)
-            throw new Error(validatedBoard.error.errors[0].message);
-        const result = yield boardService_1.boardService.deleteBoard(validatedBoard.data);
+        const boardId = req.params.id;
+        const result = yield boardService_1.boardService.deleteBoard(boardId);
         res.status(200).json({
             data: result,
+            code: 200,
+            message: 'Board deleted successfully',
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const duplicate = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const originalColumn = req.body.originalColumn;
+        const newColumn = req.body.newColumn;
+        const activeCard = req.body.activeCard;
+        if (!newColumn)
+            throw new Error('Missing required field');
+        const result = yield boardService_1.boardService.duplicate(originalColumn, newColumn, activeCard);
+        res.status(200).json({
+            data: result,
+            code: 200,
+            message: 'Board deleted successfully',
         });
     }
     catch (error) {
@@ -85,5 +112,6 @@ exports.boardController = {
     allBoards,
     getBoard,
     updateBoard,
-    deleteBoard
+    deleteBoard,
+    duplicate,
 };

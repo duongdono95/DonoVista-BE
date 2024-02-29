@@ -33,7 +33,6 @@ const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* (
         if (!form.email || !form.password)
             throw new Error('Email and Password are required');
         const validatedForm = generalTypes_1.userSchema.safeParse(form);
-        console.log(validatedForm);
         if (!validatedForm.success)
             throw new Error('Invalid form');
         const result = yield userService_1.userService.signUp(validatedForm.data);
@@ -47,5 +46,5 @@ const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* (
 });
 exports.userController = {
     signIn,
-    signUp
+    signUp,
 };

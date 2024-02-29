@@ -10,17 +10,36 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.columnService = void 0;
-const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const columnModel_1 = require("../3.Models/columnModel");
+const createNew = (column) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // const result = await userService.createNew(email, password);
-        // res.status(200).json({
-        //     data: result,
-        // });
+        const result = yield columnModel_1.columnModel.createNew(column);
+        return result;
     }
     catch (error) {
-        next(error);
+        throw error;
+    }
+});
+const editColumn = (column) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield columnModel_1.columnModel.editColumn(column);
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
+const deleteColumn = (columnId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield columnModel_1.columnModel.deleteColumn(columnId);
+        return result;
+    }
+    catch (error) {
+        throw error;
     }
 });
 exports.columnService = {
     createNew,
+    editColumn,
+    deleteColumn,
 };

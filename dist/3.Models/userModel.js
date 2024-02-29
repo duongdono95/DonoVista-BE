@@ -32,7 +32,6 @@ exports.INVALID_RETURNED_VALUE = ['password'];
 //     }
 // };
 const signIn = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(email, password);
     try {
         const validateDetail = yield (0, mongodb_1.GET_DB)()
             .collection(exports.USER_COLLECTION_NAME)
@@ -96,5 +95,5 @@ const signUp = (req) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.userModel = {
     signIn,
-    signUp
+    signUp,
 };

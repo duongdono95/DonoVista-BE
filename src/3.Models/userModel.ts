@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { GET_DB } from '../config/mongodb';
 import { z } from 'zod';
-import { UserInterface, userSchema } from "../zod/generalTypes";
+import { UserInterface, userSchema } from '../zod/generalTypes';
 
 export const USER_COLLECTION_NAME = 'users';
 
@@ -26,7 +26,6 @@ export const INVALID_RETURNED_VALUE = ['password'];
 // };
 
 const signIn = async (email: string, password: string) => {
-  console.log(email, password)
     try {
         const validateDetail = await GET_DB()
             .collection(USER_COLLECTION_NAME)
@@ -55,7 +54,7 @@ const signIn = async (email: string, password: string) => {
 const signUp = async (req: UserInterface) => {
     try {
         const validatedReq = userSchema.omit({ _id: true }).safeParse(req);
-        if(!validatedReq.success) throw new Error('User Model - Invalid form');
+        if (!validatedReq.success) throw new Error('User Model - Invalid form');
         const validateExistingUser = await GET_DB()
             .collection(USER_COLLECTION_NAME)
             .find({ email: validatedReq.data.email })
@@ -89,5 +88,5 @@ const signUp = async (req: UserInterface) => {
 
 export const userModel = {
     signIn,
-    signUp
+    signUp,
 };

@@ -1,5 +1,5 @@
-import { userModel } from "../3.Models/userModel";
-import { UserInterface } from '../zod/generalTypes'
+import { userModel } from '../3.Models/userModel';
+import { UserInterface } from '../zod/generalTypes';
 
 const signIn = async (email: string, password: string) => {
     try {
@@ -19,5 +19,5 @@ const signUp = async (form: UserInterface) => {
 };
 export const userService = {
     signIn,
-    signUp
+    signUp,
 };

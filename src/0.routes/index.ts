@@ -1,9 +1,9 @@
 import express from 'express';
 
 import { userRoute } from './userRoute';
-import { boardRoute } from "./boardRoute";
-import { columnRoute } from "./columnRoute";
-import { cardRoute } from "./cardRoute";
+import { boardRoute } from './boardRoute';
+import { cardRoute } from './cardRoute';
+import { columnRoute } from './ColumnRoute';
 
 const Router = express.Router();
 

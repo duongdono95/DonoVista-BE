@@ -47,9 +47,18 @@ const updateBoard = (updatedBoard) => __awaiter(void 0, void 0, void 0, function
         throw error;
     }
 });
-const deleteBoard = (board) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteBoard = (boardId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield boardModel_1.boardModel.deleteBoard(board);
+        const result = yield boardModel_1.boardModel.deleteBoard(boardId);
+        return result;
+    }
+    catch (error) {
+        throw error;
+    }
+});
+const duplicate = (originalColumn, newColumn, activeCard) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield boardModel_1.boardModel.duplicate(originalColumn, newColumn, activeCard);
         return result;
     }
     catch (error) {
@@ -61,5 +70,6 @@ exports.boardService = {
     allBoards,
     getBoard,
     updateBoard,
-    deleteBoard
+    deleteBoard,
+    duplicate,
 };

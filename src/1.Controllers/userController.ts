@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { userService } from "../2.Services/userService";
-import { userSchema } from "../zod/generalTypes";
+import { userService } from '../2.Services/userService';
+import { userSchema } from '../zod/generalTypes';
 
 const signIn = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -22,8 +22,7 @@ const signUp = async (req: Request, res: Response, next: NextFunction) => {
         const form = req.body;
         if (!form.email || !form.password) throw new Error('Email and Password are required');
         const validatedForm = userSchema.safeParse(form);
-        console.log(validatedForm);
-        if(!validatedForm.success) throw new Error('Invalid form');
+        if (!validatedForm.success) throw new Error('Invalid form');
         const result = await userService.signUp(validatedForm.data);
         res.status(200).json({
             data: result,
@@ -35,5 +34,5 @@ const signUp = async (req: Request, res: Response, next: NextFunction) => {
 
 export const userController = {
     signIn,
-    signUp
+    signUp,
 };

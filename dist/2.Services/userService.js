@@ -31,5 +31,5 @@ const signUp = (form) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.userService = {
     signIn,
-    signUp
+    signUp,
 };

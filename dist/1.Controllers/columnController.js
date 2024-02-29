@@ -10,12 +10,49 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.columnController = void 0;
+const generalTypes_1 = require("../zod/generalTypes");
+const columnService_1 = require("../2.Services/columnService");
 const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // const result = await userService.createNew(email, password);
-        // res.status(200).json({
-        //     data: result,
-        // });
+        const validatedCol = generalTypes_1.ColumnSchema.safeParse(req.body);
+        if (!validatedCol.success)
+            throw new Error('Validate Column failed');
+        const result = yield columnService_1.columnService.createNew(validatedCol.data);
+        res.status(200).json({
+            data: result,
+            code: 200,
+            message: 'Create Column Success',
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const editColumn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const validatedCol = generalTypes_1.ColumnSchema.safeParse(req.body);
+        if (!validatedCol.success)
+            throw new Error('Validate Column failed');
+        const result = yield columnService_1.columnService.editColumn(validatedCol.data);
+        res.status(200).json({
+            data: result,
+            code: 200,
+            message: 'Update Column Success',
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+});
+const deleteColumn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const colId = req.params.id;
+        const result = yield columnService_1.columnService.deleteColumn(colId);
+        res.status(200).json({
+            data: result,
+            code: 200,
+            message: 'Delete Column Success',
+        });
     }
     catch (error) {
         next(error);
@@ -23,4 +60,6 @@ const createNew = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 });
 exports.columnController = {
     createNew,
+    editColumn,
+    deleteColumn,
 };
