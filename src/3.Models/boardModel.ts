@@ -188,7 +188,11 @@ const duplicate = async (
         const validatedNewCol = ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(newColumn);
         const validatedOriginalColumn = ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(originalColumn);
         const validatedActiveCard = CardSchema.omit({ _id: true, createdAt: true }).safeParse(activeCard);
-
+        console.log('==================================')
+        console.log(validatedNewCol)
+        console.log(validatedOriginalColumn)
+        console.log(validatedActiveCard)
+        console.log('==================================')
         if (validatedNewCol.success && !originalColumn && !activeCard) {
             const newCol = validatedNewCol.data;
             if (newCol.cards && newCol.cards.length > 0) {

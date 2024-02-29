@@ -98,8 +98,10 @@ const moveCard = async (originalColumn: ColumnInterface, movedColumn: ColumnInte
         const valicatedOriginalColumn = ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(originalColumn);
         const valicatedMovedColumn = ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(movedColumn);
         const validatedActiveCard = CardSchema.omit({ _id: true, createdAt: true }).safeParse(activeCard);
+
         if (!valicatedOriginalColumn.success || !validatedActiveCard.success || !valicatedMovedColumn.success)
             throw new Error('Validation failed');
+
         if (valicatedOriginalColumn.data.id !== valicatedMovedColumn.data.id) {
             const updateOriginalCol = await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)

@@ -186,6 +186,11 @@ const duplicate = (originalColumn, newColumn, activeCard) => __awaiter(void 0, v
         const validatedNewCol = generalTypes_1.ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(newColumn);
         const validatedOriginalColumn = generalTypes_1.ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(originalColumn);
         const validatedActiveCard = generalTypes_1.CardSchema.omit({ _id: true, createdAt: true }).safeParse(activeCard);
+        console.log('==================================');
+        console.log(validatedNewCol);
+        console.log(validatedOriginalColumn);
+        console.log(validatedActiveCard);
+        console.log('==================================');
         if (validatedNewCol.success && !originalColumn && !activeCard) {
             const newCol = validatedNewCol.data;
             if (newCol.cards && newCol.cards.length > 0) {
