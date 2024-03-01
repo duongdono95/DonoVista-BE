@@ -64,7 +64,6 @@ const editCard = (card) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const deleteCard = (cardId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(cardId);
     try {
         const card = yield (0, mongodb_1.GET_DB)().collection(exports.CARD_COLLECTION_NAME).findOne({ id: cardId });
         if (!card)

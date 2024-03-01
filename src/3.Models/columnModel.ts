@@ -63,7 +63,6 @@ const editColumn = async (column: ColumnInterface) => {
 };
 
 const deleteColumn = async (columnId: string) => {
-    console.log(columnId);
     try {
         const column = await GET_DB().collection(COLUMN_COLLECTION_NAME).findOne({ id: columnId });
         if (!column) throw new Error('Column not found');
@@ -88,7 +87,7 @@ const deleteColumn = async (columnId: string) => {
                     },
                 },
             );
-        if (updateBoard.modifiedCount === 0) throw new Error('Delete Column unsucessful');
+        // if (updateBoard.modifiedCount === 0) throw new Error('Delete Column unsucessful');
         return deleteColumn;
     } catch (error) {
         console.log(error);
@@ -100,7 +99,6 @@ const updateColumnCards = async (columnId: string) => {
     try {
         const column = await GET_DB().collection(COLUMN_COLLECTION_NAME).findOne({ id: columnId });
         if (!column) throw new Error('Board not found');
-        console.log(column.cardOrderIds);
         if (column.cardOrderIds.length > 0) {
             const cards = await GET_DB()
                 .collection(CARD_COLLECTION_NAME)
@@ -108,7 +106,6 @@ const updateColumnCards = async (columnId: string) => {
                 .toArray();
 
             column.cards = cards;
-            console.log(cards);
             const updateColumn = await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)
                 .updateOne({ _id: new ObjectId(column._id) }, { $set: column });

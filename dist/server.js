@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongodb_1 = require("./config/mongodb");
 const cors_1 = __importDefault(require("cors"));
-const cors_2 = require("./config/cors");
 const errorHandlingMiddleware_1 = require("./middlewares/errorHandlingMiddleware");
 const async_exit_hook_1 = __importDefault(require("async-exit-hook"));
 const environment_1 = require("./config/environment");
@@ -27,7 +26,8 @@ const START_SERVER = () => {
     const host = environment_1.env.APP_HOST;
     if (!port || !host)
         throw new Error('post or host not found');
-    app.use((0, cors_1.default)(cors_2.corsOptions));
+    // app.use(cors(corsOptions));
+    app.use((0, cors_1.default)());
     app.use(express_1.default.json());
     app.use('/', _0_routes_1.app_router);
     app.use(errorHandlingMiddleware_1.errorHandlingMiddleware);

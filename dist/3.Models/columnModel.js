@@ -63,7 +63,6 @@ const editColumn = (column) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const deleteColumn = (columnId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(columnId);
     try {
         const column = yield (0, mongodb_2.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOne({ id: columnId });
         if (!column)
@@ -88,8 +87,7 @@ const deleteColumn = (columnId) => __awaiter(void 0, void 0, void 0, function* (
                 columnOrderIds: columnId,
             },
         });
-        if (updateBoard.modifiedCount === 0)
-            throw new Error('Delete Column unsucessful');
+        // if (updateBoard.modifiedCount === 0) throw new Error('Delete Column unsucessful');
         return deleteColumn;
     }
     catch (error) {
@@ -102,14 +100,12 @@ const updateColumnCards = (columnId) => __awaiter(void 0, void 0, void 0, functi
         const column = yield (0, mongodb_2.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOne({ id: columnId });
         if (!column)
             throw new Error('Board not found');
-        console.log(column.cardOrderIds);
         if (column.cardOrderIds.length > 0) {
             const cards = yield (0, mongodb_2.GET_DB)()
                 .collection(cardModel_1.CARD_COLLECTION_NAME)
                 .find({ id: { $in: column.cardOrderIds } })
                 .toArray();
             column.cards = cards;
-            console.log(cards);
             const updateColumn = yield (0, mongodb_2.GET_DB)()
                 .collection(exports.COLUMN_COLLECTION_NAME)
                 .updateOne({ _id: new mongodb_1.ObjectId(column._id) }, { $set: column });

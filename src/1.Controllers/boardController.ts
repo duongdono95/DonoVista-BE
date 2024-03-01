@@ -77,11 +77,9 @@ const deleteBoard = async (req: Request, res: Response, next: NextFunction) => {
 
 const duplicate = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const originalColumn = req.body.originalColumn;
-        const newColumn = req.body.newColumn;
-        const activeCard = req.body.activeCard;
+        const newColumn = req.body;
         if (!newColumn) throw new Error('Missing required field');
-        const result = await boardService.duplicate(originalColumn, newColumn, activeCard);
+        const result = await boardService.duplicate(newColumn);
         res.status(200).json({
             data: result,
             code: 200,

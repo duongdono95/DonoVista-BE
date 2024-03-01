@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OBJECT_ID_RULE_MESSAGE = exports.OBJECT_ID_RULE = exports.BOARD_TYPES = exports.WHITELIST_DOMAINS = void 0;
-exports.WHITELIST_DOMAINS = ['http://localhost:2205', 'http://127.0.0.1:2205'];
+exports.WHITELIST_DOMAINS = ['http://localhost:2205', 'http://127.0.0.1:2205', 'localhost',];
 exports.BOARD_TYPES = {
     PUBLIC: 'public',
     PRIVATE: 'private',

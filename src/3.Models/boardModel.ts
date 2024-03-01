@@ -8,7 +8,7 @@ import {
     ColumnInterface,
     ColumnSchema,
 } from '../zod/generalTypes';
-import { COLUMN_COLLECTION_NAME } from './columnModel';
+import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
 import { CARD_COLLECTION_NAME } from './cardModel';
 
 export const BOARD_COLLECTION_NAME = 'boards';
@@ -180,16 +180,12 @@ const aggregateColumn = async (boardId: ObjectId) => {
 };
 
 const duplicate = async (
-    originalColumn: null | ColumnInterface,
-    newColumn: ColumnInterface,
-    activeCard: CardInterface | null,
+    newColumn: ColumnInterface
 ) => {
     try {
         const validatedNewCol = ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(newColumn);
-        const validatedOriginalColumn = ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(originalColumn);
-        const validatedActiveCard = CardSchema.omit({ _id: true, createdAt: true }).safeParse(activeCard);
 
-        if (validatedNewCol.success && !originalColumn && !activeCard) {
+        if (!validatedNewCol.success ) throw new Error('Validated Column Failed');
             const newCol = validatedNewCol.data;
             if (newCol.cards && newCol.cards.length > 0) {
                 const insertAllCards = await GET_DB()
@@ -211,58 +207,7 @@ const duplicate = async (
                     );
             }
             return '';
-        }
-        if (
-            originalColumn &&
-            validatedOriginalColumn.success &&
-            activeCard &&
-            validatedActiveCard.success &&
-            validatedNewCol.success
-        ) {
-            const updateOriginalCol = await GET_DB()
-                .collection(COLUMN_COLLECTION_NAME)
-                .updateOne(
-                    { id: originalColumn?.id },
-                    {
-                        $set: {
-                            ...validatedOriginalColumn.data,
-                            createdAt: new Date().toString(),
-                        },
-                    },
-                );
 
-            if (updateOriginalCol.modifiedCount === 0) throw new Error('Update Column Failed');
-            console.log('test 1');
-            console.log(validatedActiveCard);
-            const updateCard = await GET_DB()
-                .collection(CARD_COLLECTION_NAME)
-                .updateOne(
-                    { id: validatedActiveCard.data.id },
-                    { $set: { ...validatedActiveCard.data, updatedAt: new Date().toString() } },
-                );
-            console.log(updateCard);
-            if (updateCard.modifiedCount === 0) throw new Error('Create new Card Failed');
-            console.log('test 2');
-            const insertNewCol = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(validatedNewCol.data);
-            if (!insertNewCol.insertedId) throw new Error('Create new Column Failed');
-            console.log(insertNewCol.insertedId);
-            console.log(validatedNewCol.data.boardId);
-            const updateBoard = await GET_DB()
-                .collection(BOARD_COLLECTION_NAME)
-                .updateOne(
-                    { id: validatedNewCol.data.boardId },
-                    {
-                        $push: {
-                            columnOrderIds: validatedNewCol.data.id,
-                            columns: { ...validatedNewCol.data, _id: new ObjectId(insertNewCol.insertedId) },
-                        },
-                    },
-                );
-            console.log(updateBoard);
-            await boardModel.updateBoardColumns(newColumn.boardId);
-
-            return '';
-        }
     } catch (error) {
         throw error;
     }

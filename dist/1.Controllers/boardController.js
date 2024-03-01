@@ -91,12 +91,10 @@ const deleteBoard = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
 });
 const duplicate = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const originalColumn = req.body.originalColumn;
-        const newColumn = req.body.newColumn;
-        const activeCard = req.body.activeCard;
+        const newColumn = req.body;
         if (!newColumn)
             throw new Error('Missing required field');
-        const result = yield boardService_1.boardService.duplicate(originalColumn, newColumn, activeCard);
+        const result = yield boardService_1.boardService.duplicate(newColumn);
         res.status(200).json({
             data: result,
             code: 200,

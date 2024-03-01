@@ -66,7 +66,6 @@ const editCard = async (card: CardInterface) => {
     }
 };
 const deleteCard = async (cardId: string) => {
-    console.log(cardId);
     try {
         const card = await GET_DB().collection(CARD_COLLECTION_NAME).findOne({ id: cardId });
         if (!card) throw new Error('Card not found!');

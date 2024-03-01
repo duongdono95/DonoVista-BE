@@ -56,9 +56,9 @@ const deleteBoard = (boardId) => __awaiter(void 0, void 0, void 0, function* () 
         throw error;
     }
 });
-const duplicate = (originalColumn, newColumn, activeCard) => __awaiter(void 0, void 0, void 0, function* () {
+const duplicate = (newColumn) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield boardModel_1.boardModel.duplicate(originalColumn, newColumn, activeCard);
+        const result = yield boardModel_1.boardModel.duplicate(newColumn);
         return result;
     }
     catch (error) {

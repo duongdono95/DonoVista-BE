@@ -48,13 +48,9 @@ const deleteBoard = async (boardId: string) => {
     }
 };
 
-const duplicate = async (
-    originalColumn: null | ColumnInterface,
-    newColumn: ColumnInterface,
-    activeCard: CardInterface | null,
-) => {
+const duplicate = async (newColumn: ColumnInterface) => {
     try {
-        const result = await boardModel.duplicate(originalColumn, newColumn, activeCard);
+        const result = await boardModel.duplicate(newColumn);
         return result;
     } catch (error) {
         throw error;

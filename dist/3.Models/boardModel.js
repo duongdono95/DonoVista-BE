@@ -181,71 +181,31 @@ const aggregateColumn = (boardId) => __awaiter(void 0, void 0, void 0, function*
         throw new Error('Get Board Failed');
     }
 });
-const duplicate = (originalColumn, newColumn, activeCard) => __awaiter(void 0, void 0, void 0, function* () {
+const duplicate = (newColumn) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const validatedNewCol = generalTypes_1.ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(newColumn);
-        const validatedOriginalColumn = generalTypes_1.ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(originalColumn);
-        const validatedActiveCard = generalTypes_1.CardSchema.omit({ _id: true, createdAt: true }).safeParse(activeCard);
-        if (validatedNewCol.success && !originalColumn && !activeCard) {
-            const newCol = validatedNewCol.data;
-            if (newCol.cards && newCol.cards.length > 0) {
-                const insertAllCards = yield (0, mongodb_2.GET_DB)()
-                    .collection(cardModel_1.CARD_COLLECTION_NAME)
-                    .insertMany(newCol.cards.map((card) => (Object.assign(Object.assign({}, card), { _id: new mongodb_1.ObjectId() }))));
-                if (insertAllCards.insertedCount !== newCol.cards.length)
-                    throw new Error('Create new Card(s) Failed');
-                const insertNewCol = yield (0, mongodb_2.GET_DB)().collection(columnModel_1.COLUMN_COLLECTION_NAME).insertOne(newCol);
-                if (!insertNewCol.insertedId)
-                    throw new Error('Create new Column Failed.');
-                const updateBoard = yield (0, mongodb_2.GET_DB)()
-                    .collection(exports.BOARD_COLLECTION_NAME)
-                    .updateOne({ id: newCol.boardId }, {
-                    $push: {
-                        columnOrderIds: newCol.id,
-                        columns: Object.assign(Object.assign({}, newCol), { _id: new mongodb_1.ObjectId(insertNewCol.insertedId) }),
-                    },
-                });
-            }
-            return '';
-        }
-        if (originalColumn &&
-            validatedOriginalColumn.success &&
-            activeCard &&
-            validatedActiveCard.success &&
-            validatedNewCol.success) {
-            const updateOriginalCol = yield (0, mongodb_2.GET_DB)()
-                .collection(columnModel_1.COLUMN_COLLECTION_NAME)
-                .updateOne({ id: originalColumn === null || originalColumn === void 0 ? void 0 : originalColumn.id }, {
-                $set: Object.assign(Object.assign({}, validatedOriginalColumn.data), { createdAt: new Date().toString() }),
-            });
-            if (updateOriginalCol.modifiedCount === 0)
-                throw new Error('Update Column Failed');
-            console.log('test 1');
-            console.log(validatedActiveCard);
-            const updateCard = yield (0, mongodb_2.GET_DB)()
+        if (!validatedNewCol.success)
+            throw new Error('Validated Column Failed');
+        const newCol = validatedNewCol.data;
+        if (newCol.cards && newCol.cards.length > 0) {
+            const insertAllCards = yield (0, mongodb_2.GET_DB)()
                 .collection(cardModel_1.CARD_COLLECTION_NAME)
-                .updateOne({ id: validatedActiveCard.data.id }, { $set: Object.assign(Object.assign({}, validatedActiveCard.data), { updatedAt: new Date().toString() }) });
-            console.log(updateCard);
-            if (updateCard.modifiedCount === 0)
-                throw new Error('Create new Card Failed');
-            console.log('test 2');
-            const insertNewCol = yield (0, mongodb_2.GET_DB)().collection(columnModel_1.COLUMN_COLLECTION_NAME).insertOne(validatedNewCol.data);
+                .insertMany(newCol.cards.map((card) => (Object.assign(Object.assign({}, card), { _id: new mongodb_1.ObjectId() }))));
+            if (insertAllCards.insertedCount !== newCol.cards.length)
+                throw new Error('Create new Card(s) Failed');
+            const insertNewCol = yield (0, mongodb_2.GET_DB)().collection(columnModel_1.COLUMN_COLLECTION_NAME).insertOne(newCol);
             if (!insertNewCol.insertedId)
-                throw new Error('Create new Column Failed');
-            console.log(insertNewCol.insertedId);
-            console.log(validatedNewCol.data.boardId);
+                throw new Error('Create new Column Failed.');
             const updateBoard = yield (0, mongodb_2.GET_DB)()
                 .collection(exports.BOARD_COLLECTION_NAME)
-                .updateOne({ id: validatedNewCol.data.boardId }, {
+                .updateOne({ id: newCol.boardId }, {
                 $push: {
-                    columnOrderIds: validatedNewCol.data.id,
-                    columns: Object.assign(Object.assign({}, validatedNewCol.data), { _id: new mongodb_1.ObjectId(insertNewCol.insertedId) }),
+                    columnOrderIds: newCol.id,
+                    columns: Object.assign(Object.assign({}, newCol), { _id: new mongodb_1.ObjectId(insertNewCol.insertedId) }),
                 },
             });
-            console.log(updateBoard);
-            yield exports.boardModel.updateBoardColumns(newColumn.boardId);
-            return '';
         }
+        return '';
     }
     catch (error) {
         throw error;
