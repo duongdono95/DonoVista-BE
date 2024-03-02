@@ -15,6 +15,7 @@ const mongodb_2 = require("../config/mongodb");
 const generalTypes_1 = require("../zod/generalTypes");
 const boardModel_1 = require("./boardModel");
 const cardModel_1 = require("./cardModel");
+const markdownModel_1 = require("./markdownModel");
 exports.COLUMN_COLLECTION_NAME = 'columns';
 exports.INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
 const createNew = (column) => __awaiter(void 0, void 0, void 0, function* () {
@@ -67,6 +68,13 @@ const deleteColumn = (columnId) => __awaiter(void 0, void 0, void 0, function* (
         const column = yield (0, mongodb_2.GET_DB)().collection(exports.COLUMN_COLLECTION_NAME).findOne({ id: columnId });
         if (!column)
             throw new Error('Column not found');
+        if (column.cards && column.cards.length > 0) {
+            const markdowns = column.cards.map((card) => card.markdown);
+            console.log(markdowns);
+            yield (0, mongodb_2.GET_DB)()
+                .collection(markdownModel_1.MARKDOWN_COLLECTION_NAME)
+                .deleteMany({ id: { $in: markdowns } });
+        }
         if (column.cardOrderIds && column.cardOrderIds.length > 0) {
             const result = yield (0, mongodb_2.GET_DB)()
                 .collection(cardModel_1.CARD_COLLECTION_NAME)

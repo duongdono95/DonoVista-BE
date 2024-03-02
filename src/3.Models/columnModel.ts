@@ -1,9 +1,10 @@
 import { ObjectId } from 'mongodb';
 import { GET_DB } from '../config/mongodb';
 import { z } from 'zod';
-import { ColumnInterface, ColumnSchema } from '../zod/generalTypes';
+import { CardInterface, ColumnInterface, ColumnSchema } from '../zod/generalTypes';
 import { BOARD_COLLECTION_NAME, boardModel } from './boardModel';
 import { CARD_COLLECTION_NAME } from './cardModel';
+import { MARKDOWN_COLLECTION_NAME } from './markdownModel';
 
 export const COLUMN_COLLECTION_NAME = 'columns';
 
@@ -66,12 +67,20 @@ const deleteColumn = async (columnId: string) => {
     try {
         const column = await GET_DB().collection(COLUMN_COLLECTION_NAME).findOne({ id: columnId });
         if (!column) throw new Error('Column not found');
+        if (column.cards && column.cards.length > 0) {
+            const markdowns = column.cards.map((card: CardInterface) => card.markdown);
+            console.log(markdowns);
+            await GET_DB()
+                .collection(MARKDOWN_COLLECTION_NAME)
+                .deleteMany({ id: { $in: markdowns } });
+        }
         if (column.cardOrderIds && column.cardOrderIds.length > 0) {
             const result = await GET_DB()
                 .collection(CARD_COLLECTION_NAME)
                 .deleteMany({
                     id: { $in: column.cardOrderIds },
                 });
+
             if (result.deletedCount === 0) throw new Error('Deleted Cards in Column unsucessful');
         }
         const deleteColumn = await GET_DB().collection(COLUMN_COLLECTION_NAME).deleteOne({ id: columnId });

@@ -15,6 +15,7 @@ const mongodb_2 = require("../config/mongodb");
 const generalTypes_1 = require("../zod/generalTypes");
 const columnModel_1 = require("./columnModel");
 const cardModel_1 = require("./cardModel");
+const markdownModel_1 = require("./markdownModel");
 exports.BOARD_COLLECTION_NAME = 'boards';
 exports.INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
 const createNew = (req) => __awaiter(void 0, void 0, void 0, function* () {
@@ -103,15 +104,8 @@ const deleteBoard = (boardId) => __awaiter(void 0, void 0, void 0, function* () 
             .findOne({ _id: new mongodb_1.ObjectId(boardId) });
         if (!board)
             throw new Error('Board not found');
-        if (board.columnOrderIds && board.columnOrderIds.length > 0) {
-            const columns = yield (0, mongodb_2.GET_DB)()
-                .collection(columnModel_1.COLUMN_COLLECTION_NAME)
-                .find({
-                id: {
-                    $in: board.columnOrderIds,
-                },
-            })
-                .toArray();
+        if (board.columns && board.columns.length > 0) {
+            const columns = board.columns;
             const allCardIds = columns.reduce((acc, column) => {
                 if (column.cardOrderIds && column.cardOrderIds.length > 0) {
                     const cardIds = column.cardOrderIds.map((id) => id);
@@ -120,11 +114,28 @@ const deleteBoard = (boardId) => __awaiter(void 0, void 0, void 0, function* () 
                 return acc;
             }, []);
             if (allCardIds.length > 0) {
+                // Retrieve all cards to get the markdown IDs
+                const cards = yield (0, mongodb_2.GET_DB)()
+                    .collection(cardModel_1.CARD_COLLECTION_NAME)
+                    .find({ id: { $in: allCardIds } })
+                    .toArray();
+                // Extract markdown IDs from cards
+                const markdownIds = cards.reduce((acc, card) => {
+                    if (card.markdown) {
+                        acc.push(card.markdown);
+                    }
+                    return acc;
+                }, []);
+                // Delete the markdown documents associated with the cards
+                if (markdownIds.length > 0) {
+                    yield (0, mongodb_2.GET_DB)()
+                        .collection(markdownModel_1.MARKDOWN_COLLECTION_NAME)
+                        .deleteMany({ id: { $in: markdownIds } });
+                }
+                // Delete the cards
                 yield (0, mongodb_2.GET_DB)()
                     .collection(cardModel_1.CARD_COLLECTION_NAME)
-                    .deleteMany({
-                    id: { $in: allCardIds },
-                });
+                    .deleteMany({ id: { $in: allCardIds } });
             }
             yield (0, mongodb_2.GET_DB)()
                 .collection(columnModel_1.COLUMN_COLLECTION_NAME)
@@ -193,18 +204,18 @@ const duplicate = (newColumn) => __awaiter(void 0, void 0, void 0, function* () 
                 .insertMany(newCol.cards.map((card) => (Object.assign(Object.assign({}, card), { _id: new mongodb_1.ObjectId() }))));
             if (insertAllCards.insertedCount !== newCol.cards.length)
                 throw new Error('Create new Card(s) Failed');
-            const insertNewCol = yield (0, mongodb_2.GET_DB)().collection(columnModel_1.COLUMN_COLLECTION_NAME).insertOne(newCol);
-            if (!insertNewCol.insertedId)
-                throw new Error('Create new Column Failed.');
-            const updateBoard = yield (0, mongodb_2.GET_DB)()
-                .collection(exports.BOARD_COLLECTION_NAME)
-                .updateOne({ id: newCol.boardId }, {
-                $push: {
-                    columnOrderIds: newCol.id,
-                    columns: Object.assign(Object.assign({}, newCol), { _id: new mongodb_1.ObjectId(insertNewCol.insertedId) }),
-                },
-            });
         }
+        const insertNewCol = yield (0, mongodb_2.GET_DB)().collection(columnModel_1.COLUMN_COLLECTION_NAME).insertOne(newCol);
+        if (!insertNewCol.insertedId)
+            throw new Error('Create new Column Failed.');
+        const updateBoard = yield (0, mongodb_2.GET_DB)()
+            .collection(exports.BOARD_COLLECTION_NAME)
+            .updateOne({ id: newCol.boardId }, {
+            $push: {
+                columnOrderIds: newCol.id,
+                columns: Object.assign(Object.assign({}, newCol), { _id: new mongodb_1.ObjectId(insertNewCol.insertedId) }),
+            },
+        });
         return '';
     }
     catch (error) {

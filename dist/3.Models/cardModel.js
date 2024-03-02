@@ -14,6 +14,7 @@ const mongodb_1 = require("../config/mongodb");
 const generalTypes_1 = require("../zod/generalTypes");
 const columnModel_1 = require("./columnModel");
 const boardModel_1 = require("./boardModel");
+const markdownModel_1 = require("./markdownModel");
 exports.CARD_COLLECTION_NAME = 'cards';
 exports.INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
 const createNew = (card) => __awaiter(void 0, void 0, void 0, function* () {
@@ -69,6 +70,8 @@ const deleteCard = (cardId) => __awaiter(void 0, void 0, void 0, function* () {
         if (!card)
             throw new Error('Card not found!');
         const deleteCard = yield (0, mongodb_1.GET_DB)().collection(exports.CARD_COLLECTION_NAME).deleteOne({ id: cardId });
+        if (card.markdown)
+            yield (0, mongodb_1.GET_DB)().collection(markdownModel_1.MARKDOWN_COLLECTION_NAME).deleteOne({ id: card.markdown });
         const updateColumn = yield (0, mongodb_1.GET_DB)()
             .collection(columnModel_1.COLUMN_COLLECTION_NAME)
             .updateOne({

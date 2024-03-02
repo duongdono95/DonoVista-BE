@@ -89,6 +89,7 @@ exports.userSchema = zod_1.z.object({
 exports.markdownSchema = zod_1.z.object({
     _id: zod_1.z.string().optional(),
     id: zod_1.z.string(),
+    userId: zod_1.z.string(),
     cardId: zod_1.z.string(),
     content: zod_1.z.string(),
     createdAt: zod_1.z.string().optional().default(new Date().toString()),

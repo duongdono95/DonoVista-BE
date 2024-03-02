@@ -27,6 +27,7 @@ export const INVALID_RETURNED_VALUE = ['password'];
 
 const signIn = async (email: string, password: string) => {
     try {
+        console.log(email, password);
         const validateDetail = await GET_DB()
             .collection(USER_COLLECTION_NAME)
             .findOne({ email: email, password: password });

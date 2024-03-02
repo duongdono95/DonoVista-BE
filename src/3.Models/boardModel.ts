@@ -10,6 +10,7 @@ import {
 } from '../zod/generalTypes';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
 import { CARD_COLLECTION_NAME } from './cardModel';
+import { MARKDOWN_COLLECTION_NAME } from './markdownModel';
 
 export const BOARD_COLLECTION_NAME = 'boards';
 
@@ -99,17 +100,10 @@ const deleteBoard = async (boardId: string) => {
             .collection(BOARD_COLLECTION_NAME)
             .findOne({ _id: new ObjectId(boardId) });
         if (!board) throw new Error('Board not found');
-        if (board.columnOrderIds && board.columnOrderIds.length > 0) {
-            const columns = await GET_DB()
-                .collection(COLUMN_COLLECTION_NAME)
-                .find({
-                    id: {
-                        $in: board.columnOrderIds,
-                    },
-                })
-                .toArray();
+        if (board.columns && board.columns.length > 0) {
+            const columns: ColumnInterface[] = board.columns;
 
-            const allCardIds = columns.reduce((acc, column) => {
+            const allCardIds = columns.reduce((acc: string[], column) => {
                 if (column.cardOrderIds && column.cardOrderIds.length > 0) {
                     const cardIds = column.cardOrderIds.map((id: string) => id);
                     return acc.concat(cardIds);
@@ -118,11 +112,31 @@ const deleteBoard = async (boardId: string) => {
             }, []);
 
             if (allCardIds.length > 0) {
+                // Retrieve all cards to get the markdown IDs
+                const cards = await GET_DB()
+                    .collection(CARD_COLLECTION_NAME)
+                    .find({ id: { $in: allCardIds } })
+                    .toArray();
+
+                // Extract markdown IDs from cards
+                const markdownIds = cards.reduce((acc: string[], card) => {
+                    if (card.markdown) {
+                        acc.push(card.markdown);
+                    }
+                    return acc;
+                }, [] as string[]);
+
+                // Delete the markdown documents associated with the cards
+                if (markdownIds.length > 0) {
+                    await GET_DB()
+                        .collection(MARKDOWN_COLLECTION_NAME)
+                        .deleteMany({ id: { $in: markdownIds } });
+                }
+
+                // Delete the cards
                 await GET_DB()
                     .collection(CARD_COLLECTION_NAME)
-                    .deleteMany({
-                        id: { $in: allCardIds },
-                    });
+                    .deleteMany({ id: { $in: allCardIds } });
             }
             await GET_DB()
                 .collection(COLUMN_COLLECTION_NAME)
@@ -179,35 +193,32 @@ const aggregateColumn = async (boardId: ObjectId) => {
     }
 };
 
-const duplicate = async (
-    newColumn: ColumnInterface
-) => {
+const duplicate = async (newColumn: ColumnInterface) => {
     try {
         const validatedNewCol = ColumnSchema.omit({ _id: true, createdAt: true }).safeParse(newColumn);
 
-        if (!validatedNewCol.success ) throw new Error('Validated Column Failed');
-            const newCol = validatedNewCol.data;
-            if (newCol.cards && newCol.cards.length > 0) {
-                const insertAllCards = await GET_DB()
-                    .collection(CARD_COLLECTION_NAME)
-                    .insertMany(newCol.cards.map((card) => ({ ...card, _id: new ObjectId() })));
-                if (insertAllCards.insertedCount !== newCol.cards.length) throw new Error('Create new Card(s) Failed');
-                const insertNewCol = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newCol);
-                if (!insertNewCol.insertedId) throw new Error('Create new Column Failed.');
-                const updateBoard = await GET_DB()
-                    .collection(BOARD_COLLECTION_NAME)
-                    .updateOne(
-                        { id: newCol.boardId },
-                        {
-                            $push: {
-                                columnOrderIds: newCol.id,
-                                columns: { ...newCol, _id: new ObjectId(insertNewCol.insertedId) },
-                            },
-                        },
-                    );
-            }
-            return '';
-
+        if (!validatedNewCol.success) throw new Error('Validated Column Failed');
+        const newCol = validatedNewCol.data;
+        if (newCol.cards && newCol.cards.length > 0) {
+            const insertAllCards = await GET_DB()
+                .collection(CARD_COLLECTION_NAME)
+                .insertMany(newCol.cards.map((card) => ({ ...card, _id: new ObjectId() })));
+            if (insertAllCards.insertedCount !== newCol.cards.length) throw new Error('Create new Card(s) Failed');
+        }
+        const insertNewCol = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newCol);
+        if (!insertNewCol.insertedId) throw new Error('Create new Column Failed.');
+        const updateBoard = await GET_DB()
+            .collection(BOARD_COLLECTION_NAME)
+            .updateOne(
+                { id: newCol.boardId },
+                {
+                    $push: {
+                        columnOrderIds: newCol.id,
+                        columns: { ...newCol, _id: new ObjectId(insertNewCol.insertedId) },
+                    },
+                },
+            );
+        return '';
     } catch (error) {
         throw error;
     }

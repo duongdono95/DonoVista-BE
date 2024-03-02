@@ -33,6 +33,7 @@ exports.INVALID_RETURNED_VALUE = ['password'];
 // };
 const signIn = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log(email, password);
         const validateDetail = yield (0, mongodb_1.GET_DB)()
             .collection(exports.USER_COLLECTION_NAME)
             .findOne({ email: email, password: password });

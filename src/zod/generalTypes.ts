@@ -100,6 +100,7 @@ export type UserInterface = z.infer<typeof userSchema>;
 export const markdownSchema = z.object({
     _id: z.string().optional(),
     id: z.string(),
+    userId: z.string(),
     cardId: z.string(),
     content: z.string(),
     createdAt: z.string().optional().default(new Date().toString()),

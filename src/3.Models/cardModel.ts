@@ -1,15 +1,9 @@
 import { ObjectId } from 'mongodb';
 import { GET_DB } from '../config/mongodb';
-import {
-    CardInterface,
-    CardSchema,
-    ColumnInterface,
-    ColumnSchema,
-    UserInterface,
-    userSchema,
-} from '../zod/generalTypes';
+import { CardInterface, CardSchema, ColumnInterface, ColumnSchema } from '../zod/generalTypes';
 import { COLUMN_COLLECTION_NAME, columnModel } from './columnModel';
 import { boardModel } from './boardModel';
+import { MARKDOWN_COLLECTION_NAME } from './markdownModel';
 
 export const CARD_COLLECTION_NAME = 'cards';
 export const INVALID_UPDATED_FIELDS = ['_id', 'createdAt'];
@@ -70,6 +64,7 @@ const deleteCard = async (cardId: string) => {
         const card = await GET_DB().collection(CARD_COLLECTION_NAME).findOne({ id: cardId });
         if (!card) throw new Error('Card not found!');
         const deleteCard = await GET_DB().collection(CARD_COLLECTION_NAME).deleteOne({ id: cardId });
+        if (card.markdown) await GET_DB().collection(MARKDOWN_COLLECTION_NAME).deleteOne({ id: card.markdown });
         const updateColumn = await GET_DB()
             .collection(COLUMN_COLLECTION_NAME)
             .updateOne(
