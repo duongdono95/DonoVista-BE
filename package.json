@@ -1,6 +1,7 @@
 {
     "name": "donovista-be",
     "version": "1.0.0",
+    "type": "module",
     "description": "",
     "main": "src/server.ts",
     "scripts": {
