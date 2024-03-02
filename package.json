@@ -1,7 +1,6 @@
 {
     "name": "donovista-be",
     "version": "1.0.0",
-    "type": "module",
     "description": "",
     "main": "src/server.ts",
     "scripts": {
@@ -9,7 +8,7 @@
         "build": "tsc",
         "tsc": "tsc-watch",
         "start": "node dist/server.js",
-        "dev": "pm2 start process.json && pm2 logs"
+        "dev": "concurrently \"npx tsc --watch\" \"nodemon --exec ts-node src/server.ts\""
     },
     "author": "",
     "license": "ISC",
@@ -35,7 +34,6 @@
         "eslint": "^8.56.0",
         "nodemon": "^3.0.3",
         "ts-node": "^10.9.2",
-        "tsx": "^4.7.1",
         "typescript": "^5.3.3"
     }
 }
