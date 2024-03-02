@@ -23,7 +23,7 @@ const START_SERVER = () => {
 
     app.use(errorHandlingMiddleware);
     app.listen(port, host, () => {
-        console.log(`Hello ${env.AUTHOR}, I am running at http://${env.APP_HOST}:${env.APP_PORT}/`);
+        console.log(`Hello ${env.AUTHOR}, I am running at http://0.0.0.0`);
     });
     AsyncExitHook(() => CLOSE_DB);
 };
