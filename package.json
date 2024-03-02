@@ -3,11 +3,13 @@
     "version": "1.0.0",
     "description": "",
     "main": "src/server.ts",
+    "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "tsc",
+        "tsc": "tsc-watch",
         "start": "node dist/server.js",
-        "dev": "concurrently \"npx tsc --watch\" \"nodemon --exec ts-node src/server.ts\""
+        "dev": "pm2 start process.json && pm2 logs"
     },
     "author": "",
     "license": "ISC",
