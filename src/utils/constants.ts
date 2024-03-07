@@ -1,4 +1,4 @@
-export const WHITELIST_DOMAINS = ['http://localhost:2205', 'http://127.0.0.1:2205', 'localhost', ];
+export const WHITELIST_DOMAINS = ['dono-visa-fe-2.vercel.app', 'localhost'];
 
 export const BOARD_TYPES = {
     PUBLIC: 'public',

@@ -15,7 +15,7 @@ const START_SERVER = () => {
     const host = env.APP_HOST;
     if (!port || !host) throw new Error('post or host not found');
 
-    // app.use(cors(corsOptions));
+    app.use(cors(corsOptions));
     app.use(cors());
     app.use(express.json());
 
